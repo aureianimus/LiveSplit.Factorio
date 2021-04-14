@@ -19,6 +19,22 @@ state("Factorio", "1.1.30.58304-steam") {
 	byte 	 numRockets: 0x1c1aae0, 0x68, 0x68, 0x2A8, 0x0, 0x5d8;
 }
 
+state("Factorio", "1.1.32.58364-steam") {
+	//Check whether we are in a game and whether or not the game is paused"
+	ulong 	 gamePointer : 0x1c199e0, 0x68;
+	byte	 gamePaused:   0x1c199e0, 0x68, 0x68, 0x270;
+	
+	// split memory addresses
+	byte	 automationResearch: 0x1c199e0, 0x68, 0x68, 0x2C8, 0x70, 0x8, 0x0, 0xf4;
+	byte	 logisticsResearch: 0x1c199e0, 0x68, 0x68, 0x2C8, 0x70, 0x8, 0x0, 0x604;
+	byte	 steelAxeResearch: 0x1c199e0, 0x68, 0x68, 0x2C8, 0x70, 0x8, 0x0, 0x16e4;
+	byte	 automation2Research: 0x1c199e0, 0x68, 0x68, 0x2C8, 0x70, 0x8, 0x0, 0x184;
+	byte	 advancedOilProcResearch: 0x1c199e0, 0x68, 0x68, 0x2C8, 0x70, 0x8, 0x0, 0x30c4;
+	byte	 prod3ModuleResearch: 0x1c199e0, 0x68, 0x68, 0x2C8, 0x70, 0x8, 0x0, 0x6754;
+	byte	 rocketSiloResearch: 0x1c199e0, 0x68, 0x68, 0x2C8, 0x70, 0x8, 0x0, 0x6bd4;
+	byte 	 numRockets: 0x1c199e0, 0x68, 0x68, 0x2A8, 0x0, 0x5d8;
+}
+
 state("Factorio", "1.1.30-standalone") {
 	//Check whether we are in a game and whether or not the game is paused"
 	ulong 	 gamePointer : 0x1C1FD40, 0x68;
@@ -40,8 +56,10 @@ state("Factorio", "1.1.30-standalone") {
 init{
 	if (modules.First().ModuleMemorySize == 30756864)
         version = "1.1.30.58304-steam";
-    else if (modules.First().ModuleMemorySize == 30777344)
+  else if (modules.First().ModuleMemorySize == 30777344)
         version = "1.1.30-standalone";
+	else if (modules.First().ModuleMemorySize == 30752768)
+        version = "1.1.32.58364-steam";
 	else
 		print("No known version MemorySize " + modules.First().ModuleMemorySize);
 }	
