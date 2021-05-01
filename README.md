@@ -12,12 +12,12 @@ _Note that this only works properly if you also use the script to start your tim
 - **Electronics**
 - Fast Inserters
 - Steel Processing
-- **Steel Axe research (potentially making part of this useful for the steelaxe% run)**
+- **Steel Axe (potentially making part of this useful for the steelaxe% run)**
 - Logistic science
 - **Automation2**
-- **Advanced Oil Processing research**
-- **Productivity module 3 reserach**
-- **Rocket Silo research**
+- **Advanced Oil Processing**
+- **Productivity module 3**
+- **Rocket Silo**
 - **Number of rockets launched changing from 0 to 1**
 
 
