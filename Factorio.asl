@@ -3,6 +3,14 @@
  * @author  AureiAnimus and MrHug (inspired by original autosplitter by Ekelbatzen)
  * @version 1.1 on May 1st 2021 
  */
+state("Factorio", "1.1.33.58442-steam") {
+	//Check whether we are in a game and whether or not the game is paused"
+	ulong 	 gamePointer : 0x1c1c6e0, 0x68;
+	ulong	 researchArea: 0x1c1c6e0, 0x68, 0x68, 0x2C8, 0x70, 0x8, 0x0;
+	byte	 gamePaused:   0x1c1c6e0, 0x68, 0x68, 0x270;
+	byte 	 numRockets: 0x1c1c6e0, 0x68, 0x68, 0x2A8, 0x0, 0x5d8;
+}
+
 state("Factorio", "1.1.30.58304-steam") {
 	//Check whether we are in a game and whether or not the game is paused"
 	ulong 	 gamePointer : 0x1C1AAE0, 0x68;
@@ -37,6 +45,8 @@ init{
         version = "1.1.30-standalone";
 	else if (modules.First().ModuleMemorySize == 30752768)
         version = "1.1.32.58364-steam";
+	else if (modules.First().ModuleMemorySize == 30765056)
+        version = "1.1.33.58442-steam";
 	else
 		print("No known version MemorySize " + modules.First().ModuleMemorySize);
 }	
