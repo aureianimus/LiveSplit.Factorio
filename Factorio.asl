@@ -35,18 +35,26 @@ state("Factorio", "1.1.30-standalone") {
 	byte	 gamePaused:   0x1C1FD40, 0x68, 0x68, 0x270;
 	byte 	 numRockets: 0x1C1FD40, 0x68, 0x68, 0x2A8, 0x0, 0x5d8;
 }
-
+state("Factorio", "1.1.34-standalone-gog") {
+	//Check whether we are in a game and whether or not the game is paused"
+	ulong 	 gamePointer : 0x1C21B00, 0x68;
+	ulong	 researchArea: 0x1C21B00, 0x68, 0x68, 0x2C8, 0x70, 0x8, 0x0;
+	byte	 gamePaused:   0x1C21B00, 0x68, 0x68, 0x270;
+	byte 	 numRockets: 0x1C21B00, 0x68, 0x68, 0x2A8, 0x0, 0x5d8;
+}
 
 
 init{
 	if (modules.First().ModuleMemorySize == 30756864)
         version = "1.1.30.58304-steam";
-  else if (modules.First().ModuleMemorySize == 30777344)
+  	else if (modules.First().ModuleMemorySize == 30777344)
         version = "1.1.30-standalone";
 	else if (modules.First().ModuleMemorySize == 30752768)
         version = "1.1.32.58364-steam";
 	else if (modules.First().ModuleMemorySize == 30765056)
         version = "1.1.33.58442-steam";
+	else if (modules.First().ModuleMemorySize == 30785536)
+        version = "1.1.34-standalone-gog";
 	else
 		print("No known version MemorySize " + modules.First().ModuleMemorySize);
 }	
