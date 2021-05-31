@@ -1,6 +1,7 @@
 /** 
  * Factorio.asl - An ASL script for the auto-splitter of LiveSplit for the game Factorio (x64, steam version, English localization)
  * @author  AureiAnimus and MrHug (inspired by original autosplitter by Ekelbatzen)
+ * @additionnalAuthor Tignass
  * @version 1.1 on May 1st 2021 
  */
 state("Factorio", "1.1.33.58442-steam") {
