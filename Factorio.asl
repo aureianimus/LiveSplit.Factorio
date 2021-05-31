@@ -91,8 +91,14 @@ startup {
 				{ "Research", "yellow-sci", "Splits with yellow science:",0x0},
 					{ "yellow-sci", "rocket-silo", "rocket-silo completed", 0x3345 },
 
-			// { "none", "Buildings", "Split with building numbers:", 0x0},
-			// 	{ "Buildings", "Furnace", "Splits with furnaces number",0x3A4 }
+			
+			{ "none", "Buildings", "Split with building numbers:", 0x0},
+				{ "Buildings", "BurnerCity", "Splits when BurnerCity is done",0x1 },
+					{ "BurnerCity", "stone-furnace#5", "stone-furnace#5", 0x3A4 },
+					{ "BurnerCity", "burner-mining-drill#5", "burner-mining-drill#5", 0xF4 },
+				{ "Buildings", "BurnerCity2", "Splits when BurnerCity2 is done",0x1 },
+					{ "BurnerCity2", "stone-furnace#6", "stone-furnace#6", 0x3A4 },
+					{ "BurnerCity2", "burner-mining-drill#6", "burner-mining-drill#6", 0xF4 }
 		};
 
 	// create a variable of the array lenght
@@ -161,6 +167,25 @@ split {
 
 		}
 	}
+	if (settings["Buildings"]){
+			if (!settings[id]) continue;
+				foreach(KeyValuePair<string, ulong> entry in vars.split[id]) {
+					// print(entry.Key.parent.ToString());
+					if(entry.Key.Contains("#")){
+						string[] subString= entry.Key.Split('#');
+						ulong numBuilding= Convert.ToUInt64(subString[1]);
+						if(entry.Key.Contains("#"+numBuilding)){
+							if (settings[entry.Key] && !vars.splitsDone.Contains(entry.Key)) { // We want to split on it and it hasn't happened yet.
+								if (memory.ReadValue<byte>((System.IntPtr)(current.buildingNumberArea + entry.Value)) == numBuilding) {
+									vars.splitsDone.Add(entry.Key);
+									// print(entry.Key.ToString());
+									return true;
+								}
+							}
+						}
+					}
+				}
+		}
 
 	///////////////////////////////////////////////
 	////////////////////Debug//////////////////////
