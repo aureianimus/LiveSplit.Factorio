@@ -185,3 +185,8 @@ isLoading {
 shutdown {
 	vars.splitsDone = new HashSet<string>();
 }
+reset {
+	if(memory.ReadValue<byte>((System.IntPtr)(current.gamePointer)) == 0){
+		return true;
+	}
+}
