@@ -1,11 +1,11 @@
 # Autosplitter for Factorio
 
-Currently tested only against 1.1.30.58304-steam, 1.1.30-standalone, and 1.1.32.58364-steam.
+Currently tested only against 1.1.30.58304-steam, 1.1.30-standalone, 1.1.32.58364-steam, 1.1.34-gog.
 
-In the current version there is some basic customatisation of splits. The timer starts when a player transitions from not being in a game to being in a game and then splits on research or rocket launch.
+In the current version there is some basic customatisation of splits. The timer starts when a player transitions from not being in a game to being in a game and then splits on research, rocket launch or building count.
 
 Currently the following splits are supported (configurable from options menu, bold-faced are default enabled).
-_Note that this only works properly if you also use the script to start your timer, so when resetting in between make sure to have the script start your timer again!_
+_Note that this only works properly if you also use the script to start your timer (the timer will automaticaly reset if "game" (in-game) is closed_
 
 ### Research
 - **Automation**
