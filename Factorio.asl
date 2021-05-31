@@ -98,7 +98,11 @@ startup {
 					{ "BurnerCity", "burner-mining-drill#5", "burner-mining-drill#5", 0xF4 },
 				{ "Buildings", "BurnerCity2", "Splits when BurnerCity2 is done",0x1 },
 					{ "BurnerCity2", "stone-furnace#6", "stone-furnace#6", 0x3A4 },
-					{ "BurnerCity2", "burner-mining-drill#6", "burner-mining-drill#6", 0xF4 }
+					{ "BurnerCity2", "burner-mining-drill#6", "burner-mining-drill#6", 0xF4 },
+				{ "Buildings", "Power", "Splits when Power is done",0x1 },
+					{ "Power", "boiler#1", "boiler#1", 0xE8 },
+					{ "Power", "steam-engine#1", "steam-engine#1", 0x394 },
+					{ "Power", "lab#1", "lab#1", 0x25C }
 		};
 
 	// create a variable of the array lenght
