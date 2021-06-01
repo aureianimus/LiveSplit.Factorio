@@ -66,7 +66,10 @@ init{
 startup {
 	print("startup");
 	
-	// object structure (Parent, Id, Description, Pointer, defaultSelection)
+	// Object structure (Parent, Id, Description, Pointer, defaultSelection)
+	// if Id has a # followed by an integer (ex: #5) in it, will create the split whith this specific Number of building
+	// exemple: "stone-furnace#5" will split when there is 5 stone-furnaces built
+	
 	Object [,] Settings =
 		{
 			{ "none", "Firsts", "Split with firsts", 0x0, true },
@@ -149,10 +152,10 @@ startup {
 	vars.split = new Dictionary<string, Dictionary<string, ulong>>();
 
 	for (int i = 0; i < vars.ArrayLength; ++i){
-		string 	parent 				= Settings[i, 0].ToString();
-		string 	id    				= Settings[i, 1].ToString();
+		string 	parent 			= Settings[i, 0].ToString();
+		string 	id    			= Settings[i, 1].ToString();
 		string 	description  		= Settings[i, 2].ToString();
-		ulong 	address				= Convert.ToUInt64(Settings[i, 3]);
+		ulong 	address			= Convert.ToUInt64(Settings[i, 3]);
 		bool	defaultSelection	= Convert.ToBoolean(Settings[i, 4]);
 
 		//add parents entry in layout selection
