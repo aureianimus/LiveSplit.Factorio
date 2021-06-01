@@ -77,8 +77,7 @@ _Note that this only works properly if you also use the script to start your tim
 
 ## Cheat Engine .CT File
 Based on Bloodybone cheat file.
-Added Pointers for:
-Researches
+Added Pointers for: Researches and building numbers
 
 ## TODO
 
