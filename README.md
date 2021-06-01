@@ -8,16 +8,60 @@ Currently the following splits are supported (configurable from options menu, bo
 _Note that this only works properly if you also use the script to start your timer (the timer will automaticaly reset if "game" (in-game) is closed_
 
 ### Research
-- **Automation**
-- Logistics
-- **Electronics**
-- Fast Inserters
-- Steel Processing
-- **Steel Axe (potentially making part of this useful for the steelaxe% run)**
-- Logistic science
-- **Automation2**
-- **Advanced Oil Processing**
-- **Productivity module 3**
+#### Red Science
+- 	automation
+- 	logistics
+- 	electronics
+- 	fast-inserter
+- 	steel-processing
+- 	steel-axe
+- 	logistic-science-pack
+#### Green Science
+- 	automation2
+- 	advanced-material-processing
+- 	engine
+- 	fluid-handling
+- 	oil-processing
+- 	plastics
+- 	advanced-electronics
+- 	sulfur-processing
+- 	chemical-science-pack
+- 	battery
+- 	modules
+- 	productivity-module
+- 	logistics-2
+- 	railway
+- 	speed-module
+- 	advanced-oil-processing
+- 	lubricant
+- 	electric-engine
+- 	robotics
+- 	advanced-electronics-2
+- 	advanced-material-processing-2
+- 	toolbelt
+- 	research-speed-1
+- 	research-speed-2
+- 	flammables
+- 	concrete
+#### Blue Science
+- 	construction-robotics
+- 	worker-robots-speed-1
+- 	worker-robots-speed-2
+- 	production-science-pack
+- 	low-density-structure
+- 	utility-science-pack
+- 	rocket-fuel
+- 	productivity-module-2
+- 	speed-module-2
+#### Purple Science
+- 	productivity-module-3
+- 	speed-module-3
+- 	effect-transmission
+- 	research-speed-3
+#### Yellow science
+- 	rocket-control-unit
+- 	rocket-silo
+
 ### Rocket launch
 - **Rocket Silo**
 - **Number of rockets launched changing from 0 to 1**
@@ -31,6 +75,10 @@ _Note that this only works properly if you also use the script to start your tim
 - 1 steam-engine
 - 1 lab
 
+## Cheat Engine .CT File
+Based on Bloodybone cheat file.
+Added Pointers for:
+Researches
 
 ## TODO
 
