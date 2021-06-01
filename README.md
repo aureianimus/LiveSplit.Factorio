@@ -63,8 +63,7 @@ _Note that this only works properly if you also use the script to start your tim
 - 	rocket-silo
 
 ### Rocket launch
-- **Rocket Silo**
-- **Number of rockets launched changing from 0 to 1**
+- Number of rockets launched changing from 0 to 1
 
 ### Building number
 - 5 stone-furnaces
