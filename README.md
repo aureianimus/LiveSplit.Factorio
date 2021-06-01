@@ -82,6 +82,7 @@ Researches
 
 ## TODO
 
+- check buildingNumberArea (in state section) for other versions than 1.34-gog
 - Add the rest of the research to the options menu.
 - Look into splitting on production stats (e.g. number of purple science produced)
 - Group splits: for example when there is 5 stone-furnaces & 5 burner-mining-drill (for now there is one split for each)
