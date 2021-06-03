@@ -66,10 +66,10 @@ _Note that this only works properly if you also use the script to start your tim
 - Number of rockets launched changing from 0 to 1
 
 ### Building number
-- 5 stone-furnaces
-- 5 burner-mining-drill
-- 6 stone-furnaces
-- 6 burner-mining-drill
+#### Burner City 
+- 25 stone-furnaces
+- 35 burner-mining-drill
+#### Power
 - 1 boiler
 - 1 steam-engine
 - 1 lab
@@ -83,4 +83,5 @@ Added Pointers for: Researches and building numbers
 - check buildingNumberArea (in state section) for other versions than 1.34-gog
 - Add the rest of the research to the options menu.
 - Look into splitting on production stats (e.g. number of purple science produced)
-- Group splits: for example when there is 5 stone-furnaces & 5 burner-mining-drill (for now there is one split for each)
+- Add the rest of the buildings to the building list
+- Add more splits (on building count) in the option menu
