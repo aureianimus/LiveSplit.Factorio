@@ -171,9 +171,32 @@ startup {
 	{
 		{ "stone-furnace", 0x3A4 },
 		{ "burner-mining-drill", 0xF4 },
+		{ "iron-chest", 0x39C },
+		{ "offshore-pump", 0x2CC },
 		{ "boiler", 0xE8 },
 		{ "steam-engine", 0x394 },
+		{ "pump", 0x300 },
+		{ "electric-mining-drill", 0x198 },
+		{ "small-electric-pole", 0x33C },
 		{ "lab", 0x25C },
+		{ "pipe", 0x2E0 },
+		{ "pipe-to-ground", 0x2E4 },
+		{ "assembling-machine-1", 0x70 },
+		{ "express-inserter", 0x24C },
+		{ "express-belt", 0x3D0 },
+		{ "express-splitter", 0x388 },
+		{ "long-handed-inserter", 0x2A4 },
+		{ "fast-inserter", 0x1E4 },
+		{ "underground-belt", 0x3E0 },
+		{ "assembling-machine-2", 0x74 },
+		{ "steel-furnace", 0x3A0 },
+		{ "pumpjack", 0x304 },
+		{ "oil-refinery", 0x2D0 },
+		{ "chemical-plant", 0x10C },
+		{ "storage-tank", 0x3AC },
+		{ "storage-chest", 0x29C },
+		{ "passive-provider-chest", 0x294 },
+		{ "roboport", 0x314 },	
 	};
 	vars.BuildingList = new Dictionary<string, ulong>();
 	for (int i = 0; i < BuildingsAddressList.GetLength(0); ++i){
@@ -185,15 +208,117 @@ startup {
 
 	//////////////////////////////////////////////////////////////////////
 	// This array is used to configure split on building count
-	// {split name, building name, number of buildings, default selection (in auto-splitter settings)}
+	// {split name, building name, number of buildings, default selection (if true: will be counted, if false: won't be taken into account)}
 	//////////////////////////////////////////////////////////////////////
 	Object [,] BuildingSplitsConfig =
 	{
-		{"BurnerCity", "stone-furnace", 25, true},
-		{"BurnerCity", "burner-mining-drill", 35, true},
-		{"Power", "boiler", 1, true},
-		{"Power", "steam-engine", 1, true},
-		{"Power", "lab", 1, true},
+		// { "Exemple", "stone-furnace", 00, true },
+		// { "Exemple", "burner-mining-drill", 00, true },
+		// { "Exemple", "iron-chest", 00, true },
+		// { "Exemple", "offshore-pump", 00, true },
+		// { "Exemple", "boiler", 00, true },
+		// { "Exemple", "steam-engine", 00, true },
+		// { "Exemple", "pump", 00, true },
+		// { "Exemple", "electric-mining-drill", 00, true },
+		// { "Exemple", "small-electric-pole", 00, false },
+		// { "Exemple", "lab", 00, true },
+		// { "Exemple", "pipe", 00, false },
+		// { "Exemple", "pipe-to-ground", 00, false },
+		// { "Exemple", "assembling-machine-1", 00, true },
+		// { "Exemple", "express-inserter", 00, false },
+		// { "Exemple", "express-belt", 00, false },
+		// { "Exemple", "express-splitter", 00, true },
+		// { "Exemple", "long-handed-inserter", 00, true },
+		// { "Exemple", "fast-inserter", 00, false },
+		// { "Exemple", "underground-belt", 00, true },
+		// { "Exemple", "assembling-machine-2", 00, true },
+		// { "Exemple", "steel-furnace", 00, true },
+		// { "Exemple", "pumpjack", 00, true },
+		// { "Exemple", "oil-refinery", 00, true },
+		// { "Exemple", "chemical-plant", 00, true },
+		// { "Exemple", "storage-tank", 00, true },
+		// { "Exemple", "storage-chest", 00, true },
+		// { "Exemple", "passive-provider-chest", 00, true },
+		// { "Exemple", "roboport", 00, true },
+
+		{ "Burner City", "stone-furnace", 22, true },
+		{ "Burner City", "burner-mining-drill", 35, true },
+		{ "Burner City", "iron-chest", 1, true },
+
+		{ "First power", "stone-furnace", 22, true },
+		{ "First power", "burner-mining-drill", 35, true },
+		{ "First power", "iron-chest", 1, true },
+		{ "First power", "offshore-pump", 1, true },
+		{ "First power", "boiler", 1, true },
+		{ "First power", "steam-engine", 1, true },
+		{ "First power", "pump", 6, true },
+		{ "First power", "electric-mining-drill", 1, true },
+		{ "First power", "small-electric-pole", 14, false },
+		{ "First power", "lab", 1, true },
+		{ "First power", "pipe", 5, false },
+
+		{ "Green chips", "stone-furnace", 96, true },
+		{ "Green chips", "burner-mining-drill", 44, true },
+		{ "Green chips", "iron-chest", 15, true },
+		{ "Green chips", "offshore-pump", 1, true },
+		{ "Green chips", "boiler", 5, true },
+		{ "Green chips", "steam-engine", 10, true },
+		{ "Green chips", "pump", 6, true },
+		{ "Green chips", "electric-mining-drill", 58, true },
+		{ "Green chips", "small-electric-pole", 84, false },
+		{ "Green chips", "lab", 3, true },
+		{ "Green chips", "pipe", 9, false },
+		{ "Green chips", "pipe-to-ground", 2, false },
+		{ "Green chips", "assembling-machine-1", 34, true },
+		{ "Green chips", "express-inserter", 203, false },
+		{ "Green chips", "express-belt", 425, false },
+		{ "Green chips", "express-splitter", 2, true },
+		{ "Green chips", "long-handed-inserter", 9, true },
+
+		{ "36 labs", "stone-furnace", 124, true },
+		{ "36 labs", "burner-mining-drill", 44, true },
+		{ "36 labs", "iron-chest", 21, true },
+		{ "36 labs", "offshore-pump", 1, true },
+		{ "36 labs", "boiler", 15, true },
+		{ "36 labs", "steam-engine", 30, true },
+		{ "36 labs", "pump", 6, true },
+		{ "36 labs", "electric-mining-drill", 84, true },
+		{ "36 labs", "small-electric-pole", 151, false },
+		{ "36 labs", "lab", 36, true },
+		{ "36 labs", "pipe", 19, false },
+		{ "36 labs", "pipe-to-ground", 4, false },
+		{ "36 labs", "assembling-machine-1", 63, true },
+		{ "36 labs", "express-inserter", 288, false },
+		{ "36 labs", "express-belt", 754, false },
+		{ "36 labs", "express-splitter", 4, true },
+		{ "36 labs", "long-handed-inserter", 41, true },
+		{ "36 labs", "fast-inserter", 56, false },
+
+		{ "Blue Science", "stone-furnace", 103, true },
+		{ "Blue Science", "burner-mining-drill", 37, true },
+		{ "Blue Science", "iron-chest", 37, true },
+		{ "Blue Science", "offshore-pump", 3, true },
+		{ "Blue Science", "boiler", 37, true },
+		{ "Blue Science", "steam-engine", 74, true },
+		{ "Blue Science", "pump", 00, true },
+		{ "Blue Science", "electric-mining-drill", 312, true },
+		{ "Blue Science", "small-electric-pole", 449, false },
+		{ "Blue Science", "lab", 36, true },
+		{ "Blue Science", "pipe", 185, false },
+		{ "Blue Science", "pipe-to-ground", 71, false },
+		{ "Blue Science", "assembling-machine-1", 26, true },
+		{ "Blue Science", "express-inserter", 683, false },
+		{ "Blue Science", "express-belt", 2600, false },
+		{ "Blue Science", "express-splitter", 8, true },
+		{ "Blue Science", "long-handed-inserter", 283, true },
+		{ "Blue Science", "fast-inserter", 131, false },
+		{ "Blue Science", "underground-belt", 63, true },
+		{ "Blue Science", "assembling-machine-2", 133, true },
+		{ "Blue Science", "steel-furnace", 216, true },
+		{ "Blue Science", "pumpjack", 5, true },
+		{ "Blue Science", "oil-refinery", 9, true },
+		{ "Blue Science", "chemical-plant", 8, true },
+		{ "Blue Science", "storage-tank", 10, true },
 	};
 
 	settings.Add("BuildingCount",true,"Splits by building count");
@@ -205,18 +330,22 @@ startup {
 	for (int i = 0; i < BuildingSplitsConfig.GetLength(0); ++i){
 		string 	name = BuildingSplitsConfig[i,1].ToString();
 		int 	number = Convert.ToInt32(BuildingSplitsConfig[i,2]);
-		bool	defaultSelection	= Convert.ToBoolean(Settings[i, 3]);
-		if (splitName!=BuildingSplitsConfig[i,0]){
-			splitName = BuildingSplitsConfig[i,0].ToString();
-			toolTip=splitName+":\n\t"+name+" ("+number+")\n";
-			settings.Add(splitName,defaultSelection,splitName,"BuildingCount");
-			vars.BuildingSplit[splitName] = new Dictionary<string, int>();
-			vars.BuildingSplit[splitName][name] = number;
-		}else{
-			toolTip = toolTip +"\t"+name+" ("+number+")\n";
-			vars.BuildingSplit[splitName][name] = number;
+		bool	defaultSelection	= Convert.ToBoolean(BuildingSplitsConfig[i, 3]);
+
+		if (defaultSelection==true){
+			if (splitName!=BuildingSplitsConfig[i,0]){
+				splitName = BuildingSplitsConfig[i,0].ToString();
+				toolTip=splitName+":\n\t"+name+" ("+number+")\n";
+				// settings.Add(id, defaultSelection, description, parent)
+				settings.Add(splitName,defaultSelection,splitName,"BuildingCount");
+				vars.BuildingSplit[splitName] = new Dictionary<string, int>();
+				vars.BuildingSplit[splitName][name] = number;
+			}else{
+				toolTip = toolTip +"\t"+name+" ("+number+")\n";
+				vars.BuildingSplit[splitName][name] = number;
+			}
+			settings.SetToolTip(splitName,toolTip);
 		}
-		settings.SetToolTip(splitName,toolTip);
 	}
 
 	vars.allConditionsOK = true;
