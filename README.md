@@ -66,13 +66,89 @@ _Note that this only works properly if you also use the script to start your tim
 - Number of rockets launched changing from 0 to 1
 
 ### Building number
-#### Burner City 
-- 25 stone-furnaces
-- 35 burner-mining-drill
-#### Power
-- 1 boiler
-- 1 steam-engine
-- 1 lab
+#### Burner City
+ - stone-furnace: 22
+ - burner-mining-drill: 35
+ - iron-chest: 1
+
+#### First power
+ - stone-furnace: 22
+ - burner-mining-drill: 35
+ - iron-chest: 1
+ - offshore-pump: 1
+ - boiler: 1
+ - steam-engine: 1
+ - pump: 6
+ - electric-mining-drill: 1
+ - small-electric-pole: 14
+ - lab: 1
+ - pipe: 5
+
+#### Green chips
+ - stone-furnace: 96
+ - burner-mining-drill: 44
+ - iron-chest: 15
+ - offshore-pump: 1
+ - boiler: 5
+ - steam-engine: 10
+ - pump: 6
+ - electric-mining-drill: 58
+ - small-electric-pole: 84
+ - lab: 3
+ - pipe: 9
+ - pipe-to-ground: 2
+ - assembling-machine-1: 34
+ - express-inserter: 203
+ - express-belt: 425
+ - express-splitter: 2
+ - long-handed-inserter: 9
+
+#### 36 labs
+ - stone-furnace: 124
+ - burner-mining-drill: 44
+ - iron-chest: 21
+ - offshore-pump: 1
+ - boiler: 15
+ - steam-engine: 30
+ - pump: 6
+ - electric-mining-drill: 84
+ - small-electric-pole: 151
+ - lab: 36
+ - pipe: 19
+ - pipe-to-ground: 4
+ - assembling-machine-1: 63
+ - express-inserter: 288
+ - express-belt: 754
+ - express-splitter: 4
+ - long-handed-inserter: 41
+ - fast-inserter: 56
+
+#### Blue Science
+ - stone-furnace: 103
+ - burner-mining-drill: 37
+ - iron-chest: 37
+ - offshore-pump: 3
+ - boiler: 37
+ - steam-engine: 74
+ - pump: 6
+ - electric-mining-drill: 312
+ - small-electric-pole: 449
+ - lab: 36
+ - pipe: 185
+ - pipe-to-ground: 71
+ - assembling-machine-1: 26
+ - express-inserter: 683
+ - express-belt: 2600
+ - express-splitter: 8
+ - long-handed-inserter: 283
+ - fast-inserter: 131
+ - underground-belt: 63
+ - assembling-machine-2: 133
+ - steel-furnace: 216
+ - pumpjack: 5
+ - oil-refinery: 9
+ - chemical-plant: 8
+ - storage-tank: 10
 
 ## Cheat Engine .CT File
 Based on Bloodybone cheat file.
