@@ -1,0 +1,5138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="34">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>295</ID>
+      <Description>"Bloodybone"</Description>
+      <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+      <LastState/>
+      <Color>0000FF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript Async="1">[ENABLE]
+{$lua}
+if syntaxcheck then return end
+
+if not getAddressSafe("luaclient-x86_64.dll") then
+  autoAssemble([[
+  loadlibrary(luaclient-x86_64.dll)
+  luacall(openLuaServer('CELUASERVER'))
+
+  CELUA_ServerName:
+  db 'CELUASERVER',0
+  ]])
+end
+
+reinitializeSymbolhandler(false)
+
+[DISABLE]
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>11</ID>
+          <Description>"Inf Health/OneHitKill"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.EntityWithOwner::setHealthRatio+63)
+define(bytes,F3 0F 11 B7 88 00 00 00)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.EntityWithOwner::setHealthRatio+63)
+
+label(code)
+label(return)
+label(strcmp)
+label(string)
+label(string2)
+label(setHealth_data)
+registersymbol(setHealth_data)
+
+newmem:
+push rax
+push rsi
+push rdi
+lea rsi,[string]
+mov rdi,[rdi+48]
+lea rdi,[rdi+8] // Entity Name // +68 for enemies
+call long strcmp
+test al,al
+pop rdi
+pop rsi
+pop rax
+jne short @f
+
+push rax
+push rsi
+push rdi
+lea rsi,[string2]
+mov rdi,[rdi+48]
+lea rdi,[rdi+3B8] // Entity Type
+call long strcmp
+test al,al
+pop rdi
+pop rsi
+pop rax
+
+je short code
+
+cmp [setHealth_data+4],1
+jne short code
+  xorps xmm6,xmm6
+jmp short code
+
+@@:
+cmp [setHealth_data],1
+jne short code
+  push 3f800000
+  movss xmm6,[rsp]
+  add rsp,8
+
+code:
+  // Original Code
+  movss [rdi+88],xmm6
+  jmp return
+
+strcmp:
+xor rax,rax
+lodsb
+cmp byte ptr [rdi],al
+je short @f
+  xor al,al
+  ret
+@@:
+inc rdi
+test al,al
+jne short strcmp
+  mov al,1
+  ret
+
+setHealth_data:
+dd 0,0
+
+string:
+db 'character',0
+string2:
+db 'enemies',0
+
+address:
+  jmp newmem
+  nop
+  nop
+  nop
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+unregistersymbol(setHealth_data)
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>12</ID>
+              <Description>"Infinite Health"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:DISABLED
+1:ENABLED
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>setHealth_data</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>13</ID>
+              <Description>"OneHitKill Enemies"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:DISABLED
+1:ENABLED
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>setHealth_data+4</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>14</ID>
+          <Description>"Inf Vehicle Health"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Factorio.Vehicle::damage,40)
+Factorio.Vehicle::damage:
+  db C3
+
+[DISABLE]
+Factorio.Vehicle::damage:
+  db 40
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>8</ID>
+          <Description>"Achievements are allowed"</Description>
+          <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Factorio.AchievementStats::allowed,48 89 5C)
+Factorio.AchievementStats::allowed:
+db 0C 01 C3 // or al,1 ret
+
+[DISABLE]
+Factorio.AchievementStats::allowed:
+db 48 89 5C
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>354</ID>
+              <Description>"Steam Achievements are allowed"</Description>
+              <LastState/>
+              <Color>FF0000</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>define(address,Factorio.Achievement::onGainedLocal)
+define(bytes,48 89 6C 24 20)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.Achievement::onGainedLocal)
+
+label(code)
+label(return)
+label(unlockachievement_hook.end)
+label(unlockachievement_hook.data)
+label(unlockachievement_hook.gotname)
+
+newmem:
+// Save Registers
+push rcx
+push rdx
+push r8
+push r9
+push r10
+push r11
+push rbx
+mov rbx,rcx // Achievement Prototype
+sub rsp,20
+cmp [unlockachievement_hook.data],0
+jne short @f
+// Get SteamUserStats Interface
+call steam_api64.SteamClient
+test rax,rax
+je short unlockachievement_hook.end
+mov rcx,rax // SteamClient
+mov rax,[rcx] // VTable
+mov edx,1 // hSteamUser
+mov r8d,1 // hSteamPipe
+mov r9,unlockachievement_hook.data+8 // Interface Version
+call [rax+68] // GetISteamUserStats
+mov [unlockachievement_hook.data],rax
+test rax,rax
+je short unlockachievement_hook.end
+mov rcx,rax
+mov rax,[rcx] // VTable
+call [rax] // RequestCurrentStats
+@@:
+// Get Achievement Name
+mov rbx,[rbx+8] // Achievement Info
+mov rcx,[rbx+8] // Achievement Name
+call Kernel32.IsBadCodePtr
+test al,al
+jnz short @f
+  mov rdx,[rbx+8]
+  jmp short unlockachievement_hook.gotname
+@@:
+lea rdx,[rbx+8]
+unlockachievement_hook.gotname:
+mov rcx,[unlockachievement_hook.data] // ISteamUserStats
+mov rax,[rcx] // VTable
+call [rax+38] // SetAchievement
+mov rcx,[unlockachievement_hook.data] // ISteamUserStats
+mov rax,[rcx] // VTable
+call [rax+50] // StoreStats
+
+unlockachievement_hook.end:
+add rsp,20
+pop rbx
+pop r11
+pop r10
+pop r9
+pop r8
+pop rdx
+pop rcx
+
+code:
+  mov [rsp+20],rbp
+  jmp return
+
+align 10 CC
+
+unlockachievement_hook.data:
+dq 0 // SteamUserStats Interface
+db 'STEAMUSERSTATS_INTERFACE_VERSION011',0 // Interface Version
+
+address:
+  jmp newmem
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.Achievement::onGainedLocal
+
+"Factorio.exe"+25DB6: C3                       -  ret 
+"Factorio.exe"+25DB7: CC                       -  int 3 
+"Factorio.exe"+25DB8: CC                       -  int 3 
+"Factorio.exe"+25DB9: CC                       -  int 3 
+"Factorio.exe"+25DBA: CC                       -  int 3 
+"Factorio.exe"+25DBB: CC                       -  int 3 
+"Factorio.exe"+25DBC: CC                       -  int 3 
+"Factorio.exe"+25DBD: CC                       -  int 3 
+"Factorio.exe"+25DBE: CC                       -  int 3 
+"Factorio.exe"+25DBF: CC                       -  int 3 
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+25DC0: 48 89 5C 24 08           -  mov [rsp+08],rbx
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+25DC5: 48 89 6C 24 10           -  mov [rsp+10],rbp
+"Factorio.exe"+25DCA: 48 89 74 24 20           -  mov [rsp+20],rsi
+"Factorio.exe"+25DCF: 57                       -  push rdi
+"Factorio.exe"+25DD0: 48 83 EC 20              -  sub rsp,20
+"Factorio.exe"+25DD4: 48 8B 3D DD 19 67 01     -  mov rdi,[Factorio.exe+16977B8]
+"Factorio.exe"+25DDB: 49 8B E8                 -  mov rbp,r8
+"Factorio.exe"+25DDE: 48 8B DA                 -  mov rbx,rdx
+"Factorio.exe"+25DE1: 48 8B F1                 -  mov rsi,rcx
+"Factorio.exe"+25DE4: 48 85 FF                 -  test rdi,rdi
+"Factorio.exe"+25DE7: 74 31                    -  je Factorio.exe+25E1A
+}
+</AssemblerScript>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>3</ID>
+          <Description>"Get Pointers"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.Player::getUsernameWithTag)
+define(bytes,40 57 48 83 EC 60)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.Player::getUsernameWithTag)
+
+label(code)
+label(return)
+label(pPlayer)
+registersymbol(pPlayer)
+
+newmem:
+mov [pPlayer],rcx
+
+code:
+  push rdi
+  sub rsp,60
+  jmp return
+
+pPlayer:
+dq 0
+
+address:
+  jmp newmem
+  nop
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+unregistersymbol(pPlayer)
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>257</ID>
+              <Description>"Factorio.Player"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>4</ID>
+                  <Description>"Player Base"</Description>
+                  <ShowAsHex>1</ShowAsHex>
+                  <VariableType>8 Bytes</VariableType>
+                  <Address>pPlayer</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>5</ID>
+                  <Description>"UserName"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>String</VariableType>
+                  <Length>100</Length>
+                  <Unicode>0</Unicode>
+                  <CodePage>0</CodePage>
+                  <ZeroTerminate>1</ZeroTerminate>
+                  <Address>pPlayer</Address>
+                  <Offsets>
+                    <Offset>1B0</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>214</ID>
+                  <Description>"UserName LowerCase"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>String</VariableType>
+                  <Length>100</Length>
+                  <Unicode>0</Unicode>
+                  <CodePage>0</CodePage>
+                  <ZeroTerminate>1</ZeroTerminate>
+                  <Address>pPlayer</Address>
+                  <Offsets>
+                    <Offset>1D0</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>215</ID>
+                  <Description>"Player Zoom"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Double</VariableType>
+                  <Address>pPlayer</Address>
+                  <Offsets>
+                    <Offset>B0</Offset>
+                    <Offset>188</Offset>
+                    <Offset>98</Offset>
+                    <Offset>3E0</Offset>
+                    <Offset>18</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>234</ID>
+                  <Description>"Alt-Mode_Bool"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Byte</VariableType>
+                  <Address>pPlayer</Address>
+                  <Offsets>
+                    <Offset>03</Offset>
+                    <Offset>390</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>236</ID>
+              <Description>"Factorio.Character"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>235</ID>
+                  <Description>"Character Base"</Description>
+                  <ShowAsHex>1</ShowAsHex>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>8 Bytes</VariableType>
+                  <Address>pPlayer</Address>
+                  <Offsets>
+                    <Offset>198</Offset>
+                    <Offset>60</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>231</ID>
+              <Description>"Factorio.CharacterController"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>230</ID>
+                  <Description>"CharacterController Base"</Description>
+                  <ShowAsHex>1</ShowAsHex>
+                  <VariableType>8 Bytes</VariableType>
+                  <Address>pPlayer</Address>
+                  <Offsets>
+                    <Offset>60</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>232</ID>
+              <Description>"Factorio.GameView"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>233</ID>
+                  <Description>"GameView Base"</Description>
+                  <ShowAsHex>1</ShowAsHex>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>8 Bytes</VariableType>
+                  <Address>pPlayer</Address>
+                  <Offsets>
+                    <Offset>98</Offset>
+                    <Offset>3E0</Offset>
+                    <Offset>18</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>21</ID>
+          <Description>"Get Character"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.Character::updateAnimationState)
+define(bytes,48 8B C4 55 57)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.Character::updateAnimationState)
+
+label(code)
+label(return)
+label(pCharacter)
+registersymbol(pCharacter)
+
+newmem:
+mov [pCharacter],rcx
+lea rax,[rcx+118]
+mov [pCharacter+8],rax
+
+code:
+  mov rax,rsp
+  push rbp
+  push rdi
+  jmp return
+
+pCharacter:
+  dq 0,0
+
+address:
+  jmp newmem
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>22</ID>
+              <Description>"Base Address"</Description>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>pCharacter</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>337</ID>
+              <Description>"EntitySelector"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>336</ID>
+                  <Description>"EntitySelector Base Address"</Description>
+                  <ShowAsHex>1</ShowAsHex>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>8 Bytes</VariableType>
+                  <Address>pCharacter</Address>
+                  <Offsets>
+                    <Offset>648</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>197</ID>
+              <Description>"Player"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>217</ID>
+                  <Description>"Player Base Address"</Description>
+                  <ShowAsHex>1</ShowAsHex>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>8 Bytes</VariableType>
+                  <Address>pCharacter</Address>
+                  <Offsets>
+                    <Offset>1B8</Offset>
+                    <Offset>728</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>195</ID>
+              <Description>"X-Pos"</Description>
+              <ShowAsSigned>1</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>50</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>196</ID>
+              <Description>"Y-Pos"</Description>
+              <ShowAsSigned>1</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>54</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>23</ID>
+              <Description>"Entity Stuff"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>24</ID>
+                  <Description>"Entity Name"</Description>
+                  <VariableType>String</VariableType>
+                  <Length>100</Length>
+                  <Unicode>0</Unicode>
+                  <CodePage>0</CodePage>
+                  <ZeroTerminate>1</ZeroTerminate>
+                  <Address>pCharacter</Address>
+                  <Offsets>
+                    <Offset>8</Offset>
+                    <Offset>48</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>40</ID>
+              <Description>"Movement Speed"</Description>
+              <VariableType>Double</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>1D8</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>38</ID>
+              <Description>"Mining Speed Modifier"</Description>
+              <VariableType>Double</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>1B0</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>47</ID>
+              <Description>"Inventory Bonus"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>2C0</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>42</ID>
+              <Description>"Crafting Speed"</Description>
+              <VariableType>Double</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>188</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>31</ID>
+              <Description>"Added Resource reach distance"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>260</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>27</ID>
+              <Description>"Added Reach distance"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>240</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>36</ID>
+              <Description>"Added Loot pickup distance"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>2A0</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>34</ID>
+              <Description>"Added Item pickup distance"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>280</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>32</ID>
+              <Description>"Added Item drop distance"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>220</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>29</ID>
+              <Description>"Added Build distance"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>pCharacter</Address>
+              <Offsets>
+                <Offset>200</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>368</ID>
+          <Description>"Get DayTime"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.DayTime::getDarkness)
+define(bytes,F2 0F 10 59 28)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.DayTime::getDarkness)
+
+label(code)
+label(return)
+label(pDayTime)
+registersymbol(pDayTime)
+
+newmem:
+mov [pDayTime],rcx
+
+code:
+  movsd xmm3,[rcx+28]
+  jmp return
+
+pDayTime:
+dq 0
+
+address:
+  jmp newmem
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+  // movsd xmm3,[rcx+28]
+
+dealloc(newmem)
+unregistersymbol(pDayTime)
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.DayTime::getDarkness
+
+"Factorio.exe"+6FC9B8: 48 8D 4D D0              -  lea rcx,[rbp-30]
+"Factorio.exe"+6FC9BC: E8 0F 91 48 00           -  call Factorio.exe+B85AD0
+"Factorio.exe"+6FC9C1: 90                       -  nop 
+"Factorio.exe"+6FC9C2: 48 8D 55 D0              -  lea rdx,[rbp-30]
+"Factorio.exe"+6FC9C6: 48 8D 4D B0              -  lea rcx,[rbp-50]
+"Factorio.exe"+6FC9CA: E8 C1 8A 92 FF           -  call Factorio.exe+25490
+"Factorio.exe"+6FC9CF: 48 8D 15 D2 5B 30 01     -  lea rdx,[Factorio.exe+1A025A8]
+"Factorio.exe"+6FC9D6: 48 8D 4D B0              -  lea rcx,[rbp-50]
+"Factorio.exe"+6FC9DA: E8 0D 85 B2 00           -  call Factorio.exe+1224EEC
+"Factorio.exe"+6FC9DF: CC                       -  int 3 
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+6FC9E0: F2 0F 10 59 28           -  movsd xmm3,[rcx+28]
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+6FC9E5: F2 0F 10 21              -  movsd xmm4,[rcx]
+"Factorio.exe"+6FC9E9: 66 0F 2F E3              -  comisd xmm4,xmm3
+"Factorio.exe"+6FC9ED: 77 6C                    -  ja Factorio.exe+6FCA5B
+"Factorio.exe"+6FC9EF: F2 0F 10 41 10           -  movsd xmm0,[rcx+10]
+"Factorio.exe"+6FC9F4: 66 0F 2F C3              -  comisd xmm0,xmm3
+"Factorio.exe"+6FC9F8: 76 27                    -  jna Factorio.exe+6FCA21
+"Factorio.exe"+6FC9FA: 0F 28 D0                 -  movaps xmm2,xmm0
+"Factorio.exe"+6FC9FD: F2 0F 5C C4              -  subsd xmm0,xmm4
+"Factorio.exe"+6FCA01: F2 0F 5C D3              -  subsd xmm2,xmm3
+"Factorio.exe"+6FCA05: F2 0F 5E D0              -  divsd xmm2,xmm0
+}
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>369</ID>
+              <Description>"Factorio.DayTime"</Description>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>pDayTime</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>370</ID>
+              <Description>"Current Time"</Description>
+              <VariableType>Double</VariableType>
+              <Address>pDayTime</Address>
+              <Offsets>
+                <Offset>28</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>44</ID>
+          <Description>"Update Inventory Size/Set Own"</Description>
+          <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.Controller::update)
+define(bytes,40 53 48 83 EC 20)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.Controller::update)
+
+label(code)
+label(return)
+label(updateinv_data)
+registersymbol(updateinv_data)
+
+newmem:
+push rbx
+sub rsp,20
+
+cmp [updateinv_data],1
+jne short code
+
+  and [updateinv_data],0
+
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+
+  test rcx,rcx
+  je short @f
+
+    sub rsp,28
+    call Factorio.Controller::updateInventorySize
+    add rsp,28
+
+  @@:
+
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rdx
+  pop rcx
+  pop rax
+
+code:
+  jmp return
+
+updateinv_data:
+dd 0
+
+address:
+  jmp newmem
+  nop
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+unregistersymbol(updateinv_data)
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>45</ID>
+              <Description>"Update"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>updateinv_data</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>200</ID>
+              <Description>"Change Inventory Size"</Description>
+              <Options moHideChildren="1"/>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+aobscanmodule(setinventorysize,Factorio.exe,4C C7 48 83 C4 20 5F C3)
+alloc(newmem,$1000,"Factorio.exe"+13E41B) // Factorio.Character::getCalculatedInventorySize+DC
+
+label(code)
+label(return)
+label(inventorysize_data)
+registersymbol(inventorysize_data)
+
+newmem:
+add eax,[inventorysize_data]
+
+cmp [inventorysize_data+8],1
+jne short @f
+  mov eax,[inventorysize_data+4]
+@@:
+
+code:
+  add rsp,20
+  pop rdi
+  ret
+
+inventorysize_data:
+dd 0,0,0
+
+setinventorysize+02:
+  jmp newmem
+return:
+registersymbol(setinventorysize)
+
+[DISABLE]
+
+setinventorysize+02:
+  db 48 83 C4 20 5F
+
+unregistersymbol(setinventorysize)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.Character::getCalculatedInventorySize+CB
+
+"Factorio.exe"+13E3E9: 48 8B 47 48              -  mov rax,[rdi+48]
+"Factorio.exe"+13E3ED: 0F B7 90 D0 06 00 00     -  movzx edx,word ptr [rax+000006D0]
+"Factorio.exe"+13E3F4: 8B 87 D0 02 00 00        -  mov eax,[rdi+000002D0]
+"Factorio.exe"+13E3FA: 66 0F 6E D2              -  movd xmm2,edx
+"Factorio.exe"+13E3FE: F3 0F E6 D2              -  cvtdq2pd xmm2,xmm2,xmm2
+"Factorio.exe"+13E402: F2 48 0F 2A C0           -  cvtsi2sd xmm0,rax
+"Factorio.exe"+13E407: F2 0F 58 91 C8 02 00 00  -  addsd xmm2,qword ptr [rcx+000002C8]
+"Factorio.exe"+13E40F: F2 0F 58 D0              -  addsd xmm2,xmm0
+"Factorio.exe"+13E413: F2 0F 58 D1              -  addsd xmm2,xmm1
+"Factorio.exe"+13E417: F2 0F 2C C2              -  cvttsd2si eax,xmm2
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+13E41B: 48 83 C4 20              -  add rsp,20
+"Factorio.exe"+13E41F: 5F                       -  pop rdi
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+13E420: C3                       -  ret 
+"Factorio.exe"+13E421: CC                       -  int 3 
+"Factorio.exe"+13E422: CC                       -  int 3 
+"Factorio.exe"+13E423: CC                       -  int 3 
+"Factorio.exe"+13E424: CC                       -  int 3 
+"Factorio.exe"+13E425: CC                       -  int 3 
+"Factorio.exe"+13E426: CC                       -  int 3 
+"Factorio.exe"+13E427: CC                       -  int 3 
+"Factorio.exe"+13E428: CC                       -  int 3 
+"Factorio.exe"+13E429: CC                       -  int 3 
+}
+</AssemblerScript>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>201</ID>
+                  <Description>"Added Inventory Size"</Description>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>inventorysize_data</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>204</ID>
+                  <Description>"Set Inventory Size"</Description>
+                  <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <GroupHeader>1</GroupHeader>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>202</ID>
+                      <Description>"Inventory Size to set"</Description>
+                      <VariableType>4 Bytes</VariableType>
+                      <Address>inventorysize_data+4</Address>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>203</ID>
+                      <Description>"Set Inventory Size Flag"</Description>
+                      <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+                      <VariableType>4 Bytes</VariableType>
+                      <Address>inventorysize_data+8</Address>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>205</ID>
+                      <Description>"IMPORTANT: WILL OVERWRITE ANY OTHER INVENTORY SIZE!"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>0000FF</Color>
+                      <GroupHeader>1</GroupHeader>
+                    </CheatEntry>
+                  </CheatEntries>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>52</ID>
+          <Description>"Get Cursor Stack"</Description>
+          <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.Character::getRawCursorStack)
+define(bytes,4C 8B 81 18 04 00 00)
+
+[ENABLE]
+
+assert(address,bytes)
+alloc(newmem,$100,Factorio.Character::getRawCursorStack)
+
+label(code)
+label(return)
+label(character.cursor_data)
+registersymbol(character.cursor_data)
+
+newmem:
+mov [character.cursor_data],rcx
+
+code:
+  mov r8,[rcx+418]
+  jmp return
+
+character.cursor_data:
+dq 0
+
+address:
+  jmp newmem
+  nop
+  nop
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+unregistersymbol(character.cursor_data)
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.Character::getRawCursorStack
+
+"Factorio.exe"+13E209: CC                       -  int 3 
+"Factorio.exe"+13E20A: CC                       -  int 3 
+"Factorio.exe"+13E20B: CC                       -  int 3 
+"Factorio.exe"+13E20C: CC                       -  int 3 
+"Factorio.exe"+13E20D: CC                       -  int 3 
+"Factorio.exe"+13E20E: CC                       -  int 3 
+"Factorio.exe"+13E20F: CC                       -  int 3 
+"Factorio.exe"+13E210: 48 8B 81 30 FF FF FF     -  mov rax,[rcx-000000D0]
+"Factorio.exe"+13E217: F2 0F 10 80 C8 05 00 00  -  movsd xmm0,[rax+000005C8]
+"Factorio.exe"+13E21F: C3                       -  ret 
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+13E220: 4C 8B 81 48 04 00 00     -  mov r8,[rcx+00000458]
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+13E227: 0F B7 81 58 04 00 00     -  movzx eax,word ptr [rcx+00000468]
+"Factorio.exe"+13E22E: 4C 89 02                 -  mov [rdx],r8
+"Factorio.exe"+13E231: 44 8B 81 40 04 00 00     -  mov r8d,[rcx+00000440]
+"Factorio.exe"+13E238: 44 89 42 08              -  mov [rdx+08],r8d
+"Factorio.exe"+13E23C: 0F B7 89 46 04 00 00     -  movzx ecx,word ptr [rcx+00000456]
+"Factorio.exe"+13E243: 66 89 4A 0C              -  mov [rdx+0C],cx
+"Factorio.exe"+13E247: 66 89 42 0E              -  mov [rdx+0E],ax
+"Factorio.exe"+13E24B: 48 8B C2                 -  mov rax,rdx
+"Factorio.exe"+13E24E: C3                       -  ret 
+"Factorio.exe"+13E24F: CC                       -  int 3 
+}
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>56</ID>
+              <Description>"Base Address"</Description>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>character.cursor_data</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>53</ID>
+              <Description>"Cursor Stack"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>character.cursor_data</Address>
+              <Offsets>
+                <Offset>410</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>58</ID>
+              <Description>"Max Stack"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>2 Bytes</VariableType>
+              <Address>character.cursor_data</Address>
+              <Offsets>
+                <Offset>414</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>55</ID>
+              <Description>"Item ID"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>2 Bytes</VariableType>
+              <Address>character.cursor_data</Address>
+              <Offsets>
+                <Offset>416</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>341</ID>
+              <Description>"Item Pointer"</Description>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>8 Bytes</VariableType>
+              <Address>character.cursor_data</Address>
+              <Offsets>
+                <Offset>418</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>60</ID>
+          <Description>"Inf Reach Distance"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Factorio.Character::canReachEntity,48 89 5C 24 08)
+
+Factorio.Character::canReachEntity:
+  db 0C 01 C3
+
+[DISABLE]
+Factorio.Character::canReachEntity:
+  db 48 89 5C
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>62</ID>
+          <Description>"Noclip"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.Character::checkCollisionDependingOnLatencyHidingMode)
+define(bytes,40 55 56)
+
+[ENABLE]
+assert(address,bytes)
+
+address:
+  db 31 C0 C3
+
+[DISABLE]
+
+address:
+  db bytes
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>209</ID>
+          <Description>"Toogle Admin/CheatMode"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.Player::getUsernameWithTag+6)
+define(bytes,48 C7 44 24 20 FE FF FF FF)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.Player::getUsernameWithTag+6)
+
+label(code)
+label(return)
+label(setcheatmode_end)
+label(setadmin)
+label(setadmin_end)
+label(setplayer_data)
+registersymbol(setplayer_data)
+
+newmem:
+mov dil,[rcx+29B]
+mov [setplayer_data+8],dil
+
+cmp [setplayer_data],1
+jne short setadmin
+
+  and [setplayer_data],0
+
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+
+  test rcx,rcx
+  je short setcheatmode_end
+
+    xor rdx,rdx
+    mov al,[rcx+29B]
+    test al,al
+    je short @f
+      mov dl,0
+    @@:
+    jne short @f
+      mov dl,1
+    @@:
+
+    sub rsp,28
+    call Factorio.Player::setCheatMode
+    add rsp,28
+
+  setcheatmode_end:
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rdx
+  pop rcx
+  pop rax
+
+setadmin:
+mov dil,[rcx+299]
+mov [setplayer_data+9],dil
+
+cmp [setplayer_data+4],1
+jne short code
+
+  and [setplayer_data+4],0
+
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+
+  test rcx,rcx
+  je short setadmin_end
+
+    xor rdx,rdx
+    mov al,[rcx+299]
+    test al,al
+    je short @f
+      mov dl,0
+    @@:
+    jne short @f
+      mov dl,1
+    @@:
+
+    sub rsp,28
+    call Factorio.Player::setAdmin
+    add rsp,28
+
+  setadmin_end:
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rdx
+  pop rcx
+  pop rax
+
+code:
+  mov qword ptr [rsp+20],FFFFFFFFFFFFFFFE
+  jmp return
+
+setplayer_data:
+dd 0,0
+db 0,0
+
+address:
+  jmp newmem
+  nop
+  nop
+  nop
+  nop
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>210</ID>
+              <Description>"ToggleCheatMode"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>setplayer_data</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>211</ID>
+              <Description>"CurrentCheatModeValue"</Description>
+              <VariableType>Byte</VariableType>
+              <Address>setplayer_data+8</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>213</ID>
+              <Description>"Toggle Admin"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>setplayer_data+4</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>212</ID>
+              <Description>"CurrentAdminValue"</Description>
+              <VariableType>Byte</VariableType>
+              <Address>setplayer_data+9</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>216</ID>
+          <Description>"Inf Zoom"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+aobscanmodule(infzoomout,Factorio.exe,72 03 32 C0 C3 F2 0F 10) // Factorio.RenderParameters::zoomOut+3F
+registersymbol(infzoomout)
+
+aobscanmodule(infzoomin,Factorio.exe,76 39 F2 0F 10 0D) // Factorio.RenderParameters::zoomIn+F0
+registersymbol(infzoomin)
+
+infzoomout:
+  db EB
+
+infzoomin:
+  db 90 90
+
+[DISABLE]
+
+infzoomout:
+  db 72
+
+infzoomin:
+  db 76 39
+
+unregistersymbol(infzoomout)
+unregistersymbol(infzoomin)
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.RenderParameters::zoomOut+3F
+
+"Factorio.exe"+2F7BD7: 66 39 51 48                    -  cmp [rcx+48],dx
+"Factorio.exe"+2F7BDB: F2 0F 10 A1 A8 00 00 00        -  movsd xmm4,[rcx+000000A8]
+"Factorio.exe"+2F7BE3: 66 0F 4F 51 48                 -  cmovg dx,[rcx+48]
+"Factorio.exe"+2F7BE8: 0F 28 C4                       -  movaps xmm0,xmm4
+"Factorio.exe"+2F7BEB: F2 0F 59 05 6D B2 EB 00        -  mulsd xmm0,[Factorio.exe+11B2E60]
+"Factorio.exe"+2F7BF3: 0F BF C2                       -  movsx eax,dx
+"Factorio.exe"+2F7BF6: 66 0F 6E D0                    -  movd xmm2,eax
+"Factorio.exe"+2F7BFA: F3 0F E6 D2                    -  cvtdq2pd xmm2,xmm2,xmm2
+"Factorio.exe"+2F7BFE: F2 0F 5E D0                    -  divsd xmm2,xmm0
+"Factorio.exe"+2F7C02: 66 0F 2F 91 B0 00 00 00        -  comisd xmm2,[rcx+000000B0]
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+2F7C0A: 72 03                          -  jb Factorio.exe+2F7C0F
+"Factorio.exe"+2F7C0C: 32 C0                          -  xor al,al
+"Factorio.exe"+2F7C0E: C3                             -  ret 
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+2F7C0F: F2 0F 10 1D D1 AF EB 00        -  movsd xmm3,[Factorio.exe+11B2BE8]
+"Factorio.exe"+2F7C17: F2 0F 10 0D 01 B0 EB 00        -  movsd xmm1,[Factorio.exe+11B2C20]
+"Factorio.exe"+2F7C1F: 0F 28 C3                       -  movaps xmm0,xmm3
+"Factorio.exe"+2F7C22: F2 0F 5E C1                    -  divsd xmm0,xmm1
+"Factorio.exe"+2F7C26: 0F 28 D3                       -  movaps xmm2,xmm3
+"Factorio.exe"+2F7C29: F2 0F 5C D0                    -  subsd xmm2,xmm0
+"Factorio.exe"+2F7C2D: 0F 28 C3                       -  movaps xmm0,xmm3
+"Factorio.exe"+2F7C30: F2 0F 5E C1                    -  divsd xmm0,xmm1
+"Factorio.exe"+2F7C34: F2 0F 59 D5                    -  mulsd xmm2,xmm5
+"Factorio.exe"+2F7C38: F2 0F 58 D0                    -  addsd xmm2,xmm0
+}
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.RenderParameters::zoomIn+F0
+
+"Factorio.exe"+2F7D42: B1 01                          -  mov cl,01
+"Factorio.exe"+2F7D44: F2 41 0F 10 9A A8 00 00 00     -  movsd xmm3,[r10+000000A8]
+"Factorio.exe"+2F7D4D: 84 C9                          -  test cl,cl
+"Factorio.exe"+2F7D4F: F2 0F 10 25 91 AE EB 00        -  movsd xmm4,[Factorio.exe+11B2BE8]
+"Factorio.exe"+2F7D57: B8 03 00 00 00                 -  mov eax,00000003
+"Factorio.exe"+2F7D5C: BA 14 00 00 00                 -  mov edx,00000014
+"Factorio.exe"+2F7D61: 0F 45 C2                       -  cmovne eax,edx
+"Factorio.exe"+2F7D64: 66 0F 6E C0                    -  movd xmm0,eax
+"Factorio.exe"+2F7D68: F3 0F E6 C0                    -  cvtdq2pd xmm0,xmm0,xmm0
+"Factorio.exe"+2F7D6C: 66 0F 2F C3                    -  comisd xmm0,xmm3
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+2F7D70: 76 39                          -  jna Factorio.exe+2F7DAB
+"Factorio.exe"+2F7D72: F2 0F 10 0D A6 AE EB 00        -  movsd xmm1,[Factorio.exe+11B2C20]
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+2F7D7A: 0F 28 C4                       -  movaps xmm0,xmm4
+"Factorio.exe"+2F7D7D: F2 0F 5E C1                    -  divsd xmm0,xmm1
+"Factorio.exe"+2F7D81: 0F 28 D4                       -  movaps xmm2,xmm4
+"Factorio.exe"+2F7D84: F2 0F 5C D0                    -  subsd xmm2,xmm0
+"Factorio.exe"+2F7D88: 0F 28 C4                       -  movaps xmm0,xmm4
+"Factorio.exe"+2F7D8B: F2 0F 5E C1                    -  divsd xmm0,xmm1
+"Factorio.exe"+2F7D8F: F2 0F 59 D5                    -  mulsd xmm2,xmm5
+"Factorio.exe"+2F7D93: F2 0F 58 D0                    -  addsd xmm2,xmm0
+"Factorio.exe"+2F7D97: F2 0F 59 D1                    -  mulsd xmm2,xmm1
+"Factorio.exe"+2F7D9B: F2 0F 59 D3                    -  mulsd xmm2,xmm3
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>219</ID>
+          <Description>"Teleport to Cursor"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.Player::getUsernameWithTag+F)
+define(bytes,48 89 9C 24 80 00 00 00)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.Player::getUsernameWithTag+F)
+
+label(code)
+label(return)
+label(telecursor_data)
+label(telecursor_end)
+registersymbol(telecursor_data)
+
+newmem:
+cmp [telecursor_data],1
+jne short code
+
+  and [telecursor_data],0
+
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+  push rbx
+  push rbp
+  mov rbp,rsp
+  and spl,F0
+  sub rsp,20
+
+  test rcx,rcx
+  je short telecursor_end
+
+    mov rbx,rcx // Factorio.Player
+
+    lea rdx,[telecursor_data+4] // rdx = Container for Returned Position
+
+    call Factorio.Player::getCursorMapPosition
+
+    test rbx,rbx
+    je short telecursor_end
+      mov rcx,[rbx+60] // Factorio.CharacterController
+      test rcx,rcx
+      je short telecursor_end
+        test rax,rax
+        je short telecursor_end
+          mov rdx,rax
+          call Factorio.CharacterController::setPosition
+
+  telecursor_end:
+  mov rsp,rbp
+  pop rbp
+  pop rbx
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rdx
+  pop rcx
+  pop rax
+
+code:
+  mov [rsp+80],rbx
+  jmp return
+
+telecursor_data:
+dd 0,0,0
+
+address:
+  jmp newmem
+  nop 3
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+unregistersymbol(telecursor_data)
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.Player::getUsernameWithTag+F
+
+Factorio.exe+BBF2AD: CC                       - int 3
+Factorio.exe+BBF2AE: CC                       - int 3
+Factorio.exe+BBF2AF: CC                       - int 3
+Factorio.Player::getUsernameWithTag: E9 4B 0D 3F FF           - jmp 7FF7D1990000
+Factorio.Player::getUsernameWithTag+5: 90                       - nop
+Factorio.Player::getUsernameWithTag+6: E9 45 0D 40 FF           - jmp 7FF7D19A0000
+Factorio.Player::getUsernameWithTag+B: 90                       - nop
+Factorio.Player::getUsernameWithTag+C: 90                       - nop
+Factorio.Player::getUsernameWithTag+D: 90                       - nop
+Factorio.Player::getUsernameWithTag+E: 90                       - nop
+// ---------- INJECTING HERE ----------
+Factorio.Player::getUsernameWithTag+F: 48 89 9C 24 80 00 00 00  - mov [rsp+Factorio.dtor_list_head+30],rbx
+// ---------- DONE INJECTING  ----------
+Factorio.Player::getUsernameWithTag+17: 48 8B 05 D2 3D F7 00     - mov rax,[Factorio.__security_cookie]
+Factorio.Player::getUsernameWithTag+1E: 48 33 C4                 - xor rax,rsp
+Factorio.Player::getUsernameWithTag+21: 48 89 44 24 50           - mov [rsp+50],rax
+Factorio.Player::getUsernameWithTag+26: 48 8B DA                 - mov rbx,rdx
+Factorio.Player::getUsernameWithTag+29: 48 8B F9                 - mov rdi,rcx
+Factorio.Player::getUsernameWithTag+2C: 48 89 54 24 28           - mov [rsp+28],rdx
+Factorio.Player::getUsernameWithTag+31: 48 8D 91 B0 01 00 00     - lea rdx,[rcx+Factorio.ssprintf_buffer+60]
+Factorio.Player::getUsernameWithTag+38: 48 83 B9 00 02 00 00 00  - cmp qword ptr [rcx+Factorio.ssprintf_buffer+B0],00
+Factorio.Player::getUsernameWithTag+40: 75 0A                    - jne Factorio.Player::getUsernameWithTag+4C
+Factorio.Player::getUsernameWithTag+42: 48 8B CB                 - mov rcx,rbx
+}
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>220</ID>
+              <Description>"Teleport Flag"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:Do Nothing
+1:Teleport
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>telecursor_data</Address>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>4</Key>
+                  </Keys>
+                  <Value>1</Value>
+                  <ID>0</ID>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>239</ID>
+          <Description>"Teleport Activation"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.MainLoop::mainLoopStep)
+define(bytes,48 8B C4 55 57)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.MainLoop::mainLoopStep)
+
+label(return)
+label(tele_end)
+label(tele_data)
+registersymbol(tele_data)
+
+newmem:
+mov rax,rsp
+push rbp
+push rdi
+
+cmp [tele_data],0
+je return
+
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+
+  sub rsp,20
+
+  // Get CharacterController
+  mov r11,[Factorio.Global] // Factorio.GlobalContext
+  test r11,r11
+  je short tele_end
+    mov r11,[r11+68] // Factorio.Game
+    test r11,r11
+    je short tele_end
+      mov r11,[r11+B0] // Factorio.Player
+      test r11,r11
+      je short tele_end
+        mov r11,[r11+60] // Factorio.CharacterController
+        test r11,r11
+        je short tele_end
+
+       cmp [tele_data],1
+       jne short @f
+         xor rdx,rdx
+         lea rdx,[tele_data+4]
+         mov rcx,r11
+         test rcx,rcx
+         je short tele_end
+           call Factorio.CharacterController::getPosition
+       @@:
+       cmp [tele_data],2
+       jne short tele_end
+         mov rcx,r11
+         xor rdx,rdx
+         lea rdx,[tele_data+4]
+         test rcx,rcx
+         je short tele_end
+           call Factorio.CharacterController::setPosition
+
+tele_end:
+and [tele_data],0
+
+add rsp,20
+
+pop r11
+pop r10
+pop r9
+pop r8
+pop rdx
+pop rcx
+pop rax
+jmp return
+
+tele_data:
+dd 0,0,0
+
+address:
+  jmp newmem
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>240</ID>
+              <Description>"Teleport Flag"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:Do Nothing
+1:Save Location
+2:Teleport
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>tele_data</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>241</ID>
+              <Description>"Saved X"</Description>
+              <ShowAsSigned>1</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>tele_data+4</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>242</ID>
+              <Description>"Saved Y"</Description>
+              <ShowAsSigned>1</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>tele_data+8</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>244</ID>
+          <Description>"Reveal All Recipes"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+aobscanmodule(unlockallcrafts,Factorio.exe,03 4C 89 44 * * * * * * * * * * * 74)
+registersymbol(unlockallcrafts)
+alloc(unlockallcrafts_bkp,2,Factorio.CraftingGui::getRecipes+A1)
+registersymbol(unlockallcrafts_bkp)
+
+unlockallcrafts_bkp:
+  readmem(unlockallcrafts+F,2)
+
+unlockallcrafts+F:
+  db 90 90
+
+[DISABLE]
+
+unlockallcrafts+F:
+  readmem(unlockallcrafts_bkp,2)
+
+unregistersymbol(unlockallcrafts)
+unregistersymbol(unlockallcrafts_bkp)
+dealloc(unlockallcrafts_bkp)
+
+
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.CraftingGui::getRecipes+A1
+
+"Factorio.exe"+48506F: 48 3B 58 20              -  cmp rbx,[rax+20]
+"Factorio.exe"+485073: 48 0F 47 EE              -  cmova rbp,rsi
+"Factorio.exe"+485077: 48 85 ED                 -  test rbp,rbp
+"Factorio.exe"+48507A: 74 6F                    -  je Factorio.exe+4850EB
+"Factorio.exe"+48507C: 0F 1F 40 00              -  nop [rax+00]
+"Factorio.exe"+485080: 4C 8B 03                 -  mov r8,[rbx]
+"Factorio.exe"+485083: 4C 89 44 24 50           -  mov [rsp+50],r8
+"Factorio.exe"+485088: 45 84 F6                 -  test r14l,r14l
+"Factorio.exe"+48508B: 75 31                    -  jne Factorio.exe+4850BE
+"Factorio.exe"+48508D: 45 38 70 58              -  cmp [r8+58],r14l
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+485091: 74 4C                    -  je Factorio.exe+4850DF
+"Factorio.exe"+485093: 41 0F B7 48 18           -  movzx ecx,word ptr [r8+18]
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+485098: 0F B6 15 75 BE 1E 01     -  movzx edx,byte ptr [Factorio.exe+1670F14]
+"Factorio.exe"+48509F: 48 8B 05 22 56 21 01     -  mov rax,[Factorio.exe+169A6C8]
+"Factorio.exe"+4850A6: 48 8B 0C C8              -  mov rcx,[rax+rcx*8]
+"Factorio.exe"+4850AA: 48 8B 84 D1 50 01 00 00  -  mov rax,[rcx+rdx*8+00000150]
+"Factorio.exe"+4850B2: 44 38 70 4D              -  cmp [rax+4D],r14l
+"Factorio.exe"+4850B6: 75 27                    -  jne Factorio.exe+4850DF
+"Factorio.exe"+4850B8: 44 38 70 4F              -  cmp [rax+4F],r14l
+"Factorio.exe"+4850BC: 75 21                    -  jne Factorio.exe+4850DF
+"Factorio.exe"+4850BE: 48 8B 57 08              -  mov rdx,[rdi+08]
+"Factorio.exe"+4850C2: 48 39 57 10              -  cmp [rdi+10],rdx
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>376</ID>
+          <Description>"No Crafting Requirenment"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address1,Factorio.ManualCrafter::startCrafting+A6) // Has been reasearched
+
+define(address2,Factorio.ManualCrafter::startCrafting+239) // Is Cheat Mode Active
+
+[ENABLE]
+assert(address1,41 80 7E 58 00)
+assert(address2,74 05)
+
+address1+4:
+  db FF
+
+address2+1:
+  db 00
+
+[DISABLE]
+
+address1+4:
+  db 00
+
+address2+1:
+  db 05
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.ManualCrafter::startCrafting+A6
+
+"Factorio.exe"+AFEA00: 48 89 45 97              -  mov [rbp-69],rax
+"Factorio.exe"+AFEA04: 48 8B 8E 70 01 00 00     -  mov rcx,[rsi+00000170]
+"Factorio.exe"+AFEA0B: 48 8B 01                 -  mov rax,[rcx]
+"Factorio.exe"+AFEA0E: FF 50 08                 -  call qword ptr [rax+08]
+"Factorio.exe"+AFEA11: 48 8B 40 70              -  mov rax,[rax+70]
+"Factorio.exe"+AFEA15: 48 8B 08                 -  mov rcx,[rax]
+"Factorio.exe"+AFEA18: 0F B7 C3                 -  movzx eax,bx
+"Factorio.exe"+AFEA1B: 4C 8D 34 40              -  lea r14,[rax+rax*2]
+"Factorio.exe"+AFEA1F: 49 C1 E6 05              -  shl r14,05
+"Factorio.exe"+AFEA23: 4C 03 31                 -  add r14,[rcx]
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+AFEA26: 41 80 7E 58 00           -  cmp byte ptr [r14+58],00
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+AFEA2B: 0F 84 B9 05 00 00        -  je Factorio.exe+AFEFEA
+"Factorio.exe"+AFEA31: 48 8B 8E 70 01 00 00     -  mov rcx,[rsi+00000170]
+"Factorio.exe"+AFEA38: 48 8B 01                 -  mov rax,[rcx]
+"Factorio.exe"+AFEA3B: 49 8B D6                 -  mov rdx,r14
+"Factorio.exe"+AFEA3E: FF 50 48                 -  call qword ptr [rax+48]
+"Factorio.exe"+AFEA41: 84 C0                    -  test al,al
+"Factorio.exe"+AFEA43: 0F 85 4C 01 00 00        -  jne Factorio.exe+AFEB95
+"Factorio.exe"+AFEA49: 45 84 E4                 -  test r12l,r12l
+"Factorio.exe"+AFEA4C: 0F 85 98 05 00 00        -  jne Factorio.exe+AFEFEA
+"Factorio.exe"+AFEA52: 48 8B 8E 70 01 00 00     -  mov rcx,[rsi+00000170]
+}
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.ManualCrafter::startCrafting+239
+
+"Factorio.exe"+AFEB90: E9 55 04 00 00        -  jmp Factorio.exe+AFEFEA
+"Factorio.exe"+AFEB95: 48 8B 8E 70 01 00 00  -  mov rcx,[rsi+00000170]
+"Factorio.exe"+AFEB9C: 48 8B 01              -  mov rax,[rcx]
+"Factorio.exe"+AFEB9F: FF 10                 -  call qword ptr [rax]
+"Factorio.exe"+AFEBA1: 48 85 C0              -  test rax,rax
+"Factorio.exe"+AFEBA4: 74 1A                 -  je Factorio.exe+AFEBC0
+"Factorio.exe"+AFEBA6: 48 8B 8E 70 01 00 00  -  mov rcx,[rsi+00000170]
+"Factorio.exe"+AFEBAD: 48 8B 01              -  mov rax,[rcx]
+"Factorio.exe"+AFEBB0: FF 10                 -  call qword ptr [rax]
+"Factorio.exe"+AFEBB2: 80 B8 A2 02 00 00 00  -  cmp byte ptr [rax+000002A2],00
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+AFEBB9: 74 05                 -  je Factorio.exe+AFEBC0
+"Factorio.exe"+AFEBBB: 41 B5 01              -  mov r13l,01
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+AFEBBE: EB 03                 -  jmp Factorio.exe+AFEBC3
+"Factorio.exe"+AFEBC0: 45 32 ED              -  xor r13l,r13l
+"Factorio.exe"+AFEBC3: 48 8B 8E 70 01 00 00  -  mov rcx,[rsi+00000170]
+"Factorio.exe"+AFEBCA: 48 8B 01              -  mov rax,[rcx]
+"Factorio.exe"+AFEBCD: 41 B0 01              -  mov r8l,01
+"Factorio.exe"+AFEBD0: 48 8D 54 24 40        -  lea rdx,[rsp+40]
+"Factorio.exe"+AFEBD5: FF 50 40              -  call qword ptr [rax+40]
+"Factorio.exe"+AFEBD8: 90                    -  nop 
+"Factorio.exe"+AFEBD9: 48 8B D0              -  mov rdx,rax
+"Factorio.exe"+AFEBDC: 48 8D 4D AF           -  lea rcx,[rbp-51]
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>267</ID>
+          <Description>"Change Surface Activate Me First"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.MainLoop::mainLoopStep+5)
+define(bytes,41 56 48 8D 68 A1)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.MainLoop::mainLoopStep+5)
+
+label(code)
+label(return)
+label(bloodybone.strcmp)
+label(surface.find)
+label(surface.find_end)
+label(changesurface_data)
+label(changesurface_end)
+registersymbol(changesurface_data)
+
+newmem:
+cmp [changesurface_data],1
+jne code
+
+  and [changesurface_data],0
+
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+
+  sub rsp,28
+
+  // Get All Surfaces
+  mov r11,[Factorio.Global] // Factorio.GlobalContext
+  test r11,r11
+  je short changesurface_end
+    mov r11,[r11+68] // Factorio.Game
+    test r11,r11
+    je short changesurface_end
+      mov r10,[r11+B0] // Factorio.Player
+      test r10,r10
+      je short changesurface_end
+        mov r11,[r11+68] // Factorio.Map
+        test r11,r11
+        je short changesurface_end
+          mov r11,[r11+240] // Factorio.Surface[]
+          test r11,r11
+          je short changesurface_end
+            xor r8,r8
+            call short surface.find
+            test rax,rax
+            je short changesurface_end
+              test r10,r10
+              je short changesurface_end
+                mov rcx,[r10+60] // Factorio.CharacterController
+                mov rdx,rax // Found Surface
+                lea r8,[changesurface_data+4] // X/Y Pos
+                xor r9,r9 // ? Some Bool?
+                sub rsp,8 // Stack Alignement
+                call Factorio.CharacterController::changeSurfaceAndPosition
+                add rsp,8
+
+changesurface_end:
+add rsp,28
+
+pop r11
+pop r10
+pop r9
+pop r8
+pop rdx
+pop rcx
+pop rax
+
+code:
+  push r14
+  lea rbp,[rax-5F]
+  jmp return
+
+surface.find:
+lea rsi,[changesurface_data+10]
+mov rdi,[r11+r8*8]
+test rdi,rdi // Check if there still is a Surface
+jnz short @f
+  xor rax,rax
+  ret
+@@:
+// Check if Pointer is Valid
+push rcx
+push rdx
+push r8
+push r9
+push r10
+push r11
+xor rax,rax
+or al,1
+mov rcx,rdi
+test rcx,rcx
+je short @f
+  mov rdx,8
+  sub rsp,20
+  call Kernel32.IsBadReadPtr
+  add rsp,20
+@@:
+pop r11
+pop r10
+pop r9
+pop r8
+pop rdx
+pop rcx
+test rax,rax
+jne short @f
+// Done
+lea rdi,[rdi+18] // Surface Name
+call short bloodybone.strcmp
+test al,al
+jnz short surface.find_end
+  inc r8
+  jmp short surface.find
+
+@@:
+xor rax,rax
+ret
+
+surface.find_end:
+mov rax,[r11+r8*8]
+ret
+
+bloodybone.strcmp:
+xor rax,rax
+lodsb
+cmp byte ptr [rdi],al
+je short @f
+  xor al,al
+  ret
+@@:
+inc rdi
+test al,al
+jne short bloodybone.strcmp
+  mov al,1
+  ret
+
+changesurface_data:
+dd 0,0,0,0
+db ''
+
+address:
+  jmp newmem
+  nop
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+unregistersymbol(changesurface_data)
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>268</ID>
+              <Description>"Change Surface"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>changesurface_data</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>269</ID>
+              <Description>"X-Pos"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>changesurface_data+4</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>270</ID>
+              <Description>"Y-Pos"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>changesurface_data+8</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>271</ID>
+              <Description>"Surface Name"</Description>
+              <VariableType>String</VariableType>
+              <Length>100</Length>
+              <Unicode>0</Unicode>
+              <CodePage>0</CodePage>
+              <ZeroTerminate>1</ZeroTerminate>
+              <Address>changesurface_data+10</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>272</ID>
+          <Description>"Find Surface"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.MainLoop::mainLoopStep+B)
+define(bytes,48 81 EC D0 00 00 00)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.MainLoop::mainLoopStep+B)
+
+label(code)
+label(return)
+label(surface.getall)
+label(surface.getcount)
+label(surface.getsurfacebyindex)
+label(surface.getsurfacebyname)
+label(surface.getsurfacebyname_ci)
+label(surface.getsurfacebyname_loop)
+label(surface.getsurfacebyname_end)
+label(surface.storedata)
+label(bloodybone.strcmp)
+label(bloodybone.strcpy)
+label(bloodybone.lower)
+label(bloodybone.lower_loop)
+label(bloodybone.lower_end)
+label(getsurfaces_data)
+label(getsurfacesbyindex)
+label(getsurfacesbyname)
+label(getsurfaces_end)
+label(getsurfaces_retstring)
+registersymbol(getsurfaces_retstring)
+registersymbol(getsurfaces_data)
+
+newmem:
+cmp [getsurfaces_data],1
+jne getsurfacesbyindex
+
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+
+  call long surface.getall
+
+  test rax,rax
+  je getsurfaces_end
+
+    mov rcx,rax
+    xor r8,r8
+    call long surface.getcount
+    mov [getsurfaces_data+4],eax
+    jmp getsurfaces_end
+
+getsurfacesbyindex:
+cmp [getsurfaces_data],2
+jne getsurfacesbyname
+
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+
+  call long surface.getall
+
+  test rax,rax
+  je getsurfaces_end
+    mov rcx,rax
+    mov edx,[getsurfaces_data+8]
+    call long surface.getsurfacebyindex
+    test rax,rax
+    je getsurfaces_end
+      mov rcx,rax
+      call long surface.storedata
+      jmp getsurfaces_end
+
+getsurfacesbyname:
+cmp [getsurfaces_data],3
+jne code
+
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+
+  call long surface.getall
+
+  test rax,rax
+  je getsurfaces_end
+    mov rcx,rax
+    lea rdx,[getsurfaces_data+1C]
+    call long surface.getsurfacebyname
+    test rax,rax
+    je getsurfaces_end
+      mov rcx,rax
+      call long surface.storedata
+      jmp short getsurfaces_end
+
+getsurfaces_end:
+and [getsurfaces_data],0
+
+pop r11
+pop r10
+pop r9
+pop r8
+pop rdx
+pop rcx
+pop rax
+
+code:
+  sub rsp,D0
+  jmp return
+
+surface.getall:
+mov rax,[Factorio.Global] // Factorio.GlobalContext
+test rax,rax
+je short @f
+  mov rax,[rax+68] // Factorio.Game
+  test rax,rax
+  je short @f
+    mov rax,[rax+68] // Factorio.Map
+    test rax,rax
+    je short @f
+      mov rax,[rax+240] // Factorio.Surface[]
+      ret
+@@:
+ret
+
+surface.getcount:
+// Check if Pointer is Valid
+push rcx
+push rdx
+push r8
+push r9
+push r10
+push r11
+xor rax,rax
+or al,1
+mov rcx,[rcx+r8*8]
+test rcx,rcx
+je short @f
+  mov rdx,8
+  sub rsp,20
+  call Kernel32.IsBadReadPtr
+  add rsp,20
+@@:
+pop r11
+pop r10
+pop r9
+pop r8
+pop rdx
+pop rcx
+test rax,rax
+jne short @f
+// Done
+mov rdx,[rcx+r8*8]
+inc r8
+test rdx,rdx
+jne short surface.getcount
+  dec r8
+  @@:
+  mov rax,r8
+  ret
+
+surface.getsurfacebyindex:
+test rdx,rdx
+jg short @f
+  xor rax,rax
+  ret
+@@:
+dec rdx
+// Check if Pointer is Valid
+push rcx
+push rdx
+push r8
+push r9
+push r10
+push r11
+xor rax,rax
+or al,1
+mov rcx,[rcx+rdx*8]
+test rcx,rcx
+je short @f
+  mov rdx,8
+  sub rsp,20
+  call Kernel32.IsBadReadPtr
+  add rsp,20
+@@:
+pop r11
+pop r10
+pop r9
+pop r8
+pop rdx
+pop rcx
+test rax,rax
+jne short @f
+// Done
+
+mov rax,[rcx+rdx*8]
+ret
+
+@@:
+xor rax,rax
+ret
+
+surface.getsurfacebyname:
+push rsi
+push rdi
+xor r8,r8
+surface.getsurfacebyname_loop:
+// Check if Pointer is Valid
+push rcx
+push rdx
+push r8
+push r9
+push r10
+push r11
+xor rax,rax
+or al,1
+mov rcx,[rcx+r8*8]
+test rcx,rcx
+je short @f
+  mov rdx,8
+  sub rsp,20
+  call Kernel32.IsBadReadPtr
+  add rsp,20
+@@:
+pop r11
+pop r10
+pop r9
+pop r8
+pop rdx
+pop rcx
+test rax,rax
+jne short @f
+// Done
+
+mov r9,[rcx+r8*8]
+test r9,r9
+je short @f
+  inc r8
+  mov rsi,rdx
+  lea rdi,[r9+18]
+  cmp [getsurfaces_data+18],1
+  jne short surface.getsurfacebyname_ci
+    call long bloodybone.strcmp
+    test al,al
+    je short surface.getsurfacebyname_loop
+      mov rax,r9
+      jmp short surface.getsurfacebyname_end
+
+@@:
+xor rax,rax
+
+surface.getsurfacebyname_end:
+pop rdi
+pop rsi
+ret
+
+surface.getsurfacebyname_ci:
+push rcx
+push rbx
+push rdx
+mov rcx,rsi
+sub rsp,100
+mov rdx,rsp
+call long bloodybone.lower
+mov rbx,rax
+mov rcx,rdi
+sub rsp,100
+mov rdx,rsp
+call long bloodybone.lower
+push rsi
+push rdi
+mov rsi,rbx
+mov rdi,rax
+call long bloodybone.strcmp
+pop rdi
+pop rsi
+add rsp,200
+pop rdx
+pop rbx
+pop rcx
+test al,al
+je long surface.getsurfacebyname_loop
+  mov rax,r9
+  jmp long surface.getsurfacebyname_end
+
+surface.storedata:
+mov [getsurfaces_data+10],rcx
+mov rdx,[rcx+10]
+inc edx
+mov [getsurfaces_data+C],edx
+lea rcx,[rcx+18]
+lea rdx,[getsurfaces_retstring]
+test rcx,rcx
+je short @f
+test rdx,rdx
+je short @f
+  call long bloodybone.strcpy
+@@:
+ret
+
+bloodybone.strcmp:
+xor rax,rax
+lodsb
+cmp byte ptr [rdi],al
+je short @f
+  xor al,al
+  ret
+@@:
+inc rdi
+test al,al
+jne short bloodybone.strcmp
+  mov al,1
+  ret
+
+bloodybone.strcpy:
+push rsi
+mov rsi,rcx
+mov rcx,rdx
+@@:
+xor rax,rax
+lodsb
+test al,al
+je short @f
+  mov [rdx],al
+  inc rdx
+  jmp short @b
+@@:
+mov [rdx],al
+mov rax,rcx
+pop rsi
+ret
+
+bloodybone.lower:
+push rsi
+push rdi
+mov rsi,rcx
+mov rdi,rdx
+bloodybone.lower_loop:
+xor rax,rax
+lodsb
+test al,al
+je short bloodybone.lower_end
+  cmp al,41
+  jb short @f
+    cmp al,5A
+    ja short @f
+      add al,20
+  @@:
+  mov [rdx],al
+  inc rdx
+  jmp short bloodybone.lower_loop
+
+bloodybone.lower_end:
+mov [rdx],al
+mov rax,rdi
+pop rdi
+pop rsi
+ret
+
+getsurfaces_data:
+dd 1 // Get Count // Get Data
+dd 0 // Count
+dd 0 // Index to Search for
+dd 0 // Returned Index
+dq 0 // Returned Address
+dd 0 // Case Sensitive
+db '' // String to Search for
+
+align 200
+
+getsurfaces_retstring:
+db '' // Returned String
+
+address:
+  jmp newmem
+  nop
+  nop
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+unregistersymbol(getsurfaces_data)
+unregistersymbol(getsurfaces_retstring)
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>273</ID>
+              <Description>"Search For Surface"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:Do Nothing
+1:Find Surface Count
+2:Find Surface with Index
+3:Find Surface with Name
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>getsurfaces_data</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>274</ID>
+              <Description>"Surface Count"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>getsurfaces_data+4</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>275</ID>
+              <Description>"Index to Search for"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>getsurfaces_data+8</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>278</ID>
+              <Description>"Name to Search for"</Description>
+              <VariableType>String</VariableType>
+              <Length>256</Length>
+              <Unicode>0</Unicode>
+              <CodePage>0</CodePage>
+              <ZeroTerminate>1</ZeroTerminate>
+              <Address>getsurfaces_data+1C</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>280</ID>
+              <Description>"Case-Sensitive Search"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>getsurfaces_data+18</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>276</ID>
+              <Description>"Returned Index"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>getsurfaces_data+C</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>279</ID>
+              <Description>"Returned Name"</Description>
+              <VariableType>String</VariableType>
+              <Length>256</Length>
+              <Unicode>0</Unicode>
+              <CodePage>0</CodePage>
+              <ZeroTerminate>1</ZeroTerminate>
+              <Address>getsurfaces_retstring</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>277</ID>
+              <Description>"Returned Address"</Description>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>getsurfaces_data+10</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>290</ID>
+          <Description>"Research Stuff"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.MainLoop::mainLoopStep+1A)
+define(bytes,48 89 58 08 48 89 70 10)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$100,Factorio.MainLoop::mainLoopStep+1A)
+
+label(code)
+label(return)
+label(technology_getall)
+label(technology_data)
+label(technology_end)
+registersymbol(technology_data)
+
+newmem:
+cmp [technology_data],1
+jne short @f
+
+  and [technology_data],0
+
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+
+  call long technology_getall
+  test rax,rax
+  je long technology_end
+    mov rcx,[rax]
+    test rcx,rcx
+    je long technology_end
+      xor rdx,rdx
+      sub rsp,28
+      call Factorio.ForceData::researchAllTechnologies
+      add rsp,28
+      jmp long technology_end
+@@:
+cmp [technology_data+4],1
+jne long code
+
+  and [technology_data+4],0
+  push rax
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+
+  call long technology_getall
+  test rax,rax
+  je long technology_end
+    mov rcx,[rax]
+    test rcx,rcx
+    je long technology_end
+      sub rsp,28
+      call Factorio.ForceData::resetResearchAndEffects
+      add rsp,28
+
+  technology_end:
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rdx
+  pop rcx
+  pop rax
+
+code:
+  mov [rax+08],rbx
+  mov [rax+10],rsi
+  jmp return
+
+technology_getall:
+mov rax,[Factorio.Global] // Factorio.GlobalContext
+  test rax,rax
+  je short @f
+    mov rax,[rax+68] // Factorio.Game
+    test rax,rax
+    je short @f
+      mov rax,[rax+68] // Factorio.Map
+      test rax,rax
+      je short @f
+        mov rax,[rax+2A8] // Factorio.ForceManager
+@@:
+ret
+
+technology_data:
+dd 0
+
+address:
+  jmp newmem
+  nop
+  nop
+  nop
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+unregistersymbol(technology_data)
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>291</ID>
+              <Description>"Unlock All Technologies"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>technology_data</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>293</ID>
+              <Description>"Reset All Technologies"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>technology_data+4</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>356</ID>
+          <Description>"Give Item"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+aobscanmodule(NewItemStack,Factorio.exe,48 89 6C 24 18 48 89 74 24 20 57 48 83 EC 20 33 F6) // Factorio.ItemStack::ItemStack
+
+alloc(giveitem.main,0x1000,$process)
+registersymbol(giveitem.main)
+createthread(giveitem.main)
+
+label(giveitem.main.endloop)
+label(giveitem.main.data)
+label(giveitem.main.shouldend)
+registersymbol(giveitem.main.data)
+registersymbol(giveitem.main.giveitembyname.name)
+
+label(giveitem.main.giveitembyid)
+label(giveitem.main.giveitembyname)
+label(giveitem.main.giveitembyname.name)
+label(giveitem.main.giverandom)
+label(giveitem.main.strcmp)
+label(giveitem.main.name2id)
+label(giveitem.main.name2id.end)
+label(giveitem.main.validateptr)
+label(giveitem.main.idinrange)
+label(giveitem.main.countinrange)
+label(giveitem.main.giveitembyid.end)
+label(giveitem.main.luaprint)
+label(giveitem.main.luaprint.stackaligned)
+label(giveitem.main.luaprintfunc)
+label(giveitem.main.getmap)
+label(giveitem.main.getcursor)
+label(giveitem.main.getcharacter)
+
+label(giveitem.main.luaerror_idnotinrange)
+label(giveitem.main.luaerror_mapnotfound)
+label(giveitem.main.luaerror_characternotfound)
+label(giveitem.main.luaerror_cursornotfound)
+label(giveitem.main.luaerror_unusualerror)
+label(giveitem.main.luaerror_stacktobig)
+label(giveitem.main.luaerror_giveitembyid)
+label(giveitem.main.luaerror_cursorcontainsitem)
+label(giveitem.main.luaerror_namenotfound)
+
+giveitem.main:
+cmp [giveitem.main.data],1
+jne short @f
+  and [giveitem.main.data],0
+  call long giveitem.main.giveitembyid
+@@:
+cmp [giveitem.main.data],2
+jne short @f
+  and [giveitem.main.data],0
+  call long giveitem.main.giveitembyname
+@@:
+cmp [giveitem.main.data],3
+jne short @f
+  and [giveitem.main.data],0
+  call long giveitem.main.giverandom
+giveitem.main.endloop:
+cmp [giveitem.main.shouldend],1
+jne short giveitem.main
+
+// Destroy Thread and free memory
+sub rsp,28
+lea rcx,[giveitem.main]
+xor edx,edx
+mov r8d,8000
+mov rax,ntdll.RtlExitUserThread
+mov [rsp],rax
+jmp KernelBase.VirtualFree
+
+giveitem.main.giveitembyname:
+mov rcx,giveitem.main.giveitembyname.name
+call long giveitem.main.name2id
+test rax,rax
+je short @f
+  mov word ptr [giveitem.main.data+4],ax
+  jmp long giveitem.main.giveitembyid
+@@:
+ret
+
+giveitem.main.name2id:
+mov rsi,rcx
+xor r13,r13
+mov rbx,[Factorio.PrototypeList&lt;ItemPrototype&gt;::sortedPrototypes]
+mov r14,[Factorio.PrototypeList&lt;ItemPrototype&gt;::sortedPrototypes+8]
+@@:
+inc r13
+lea r12,[rbx+r13*8]
+cmp r12,r14
+ja short giveitem.main.name2id.end
+  mov r12,[rbx+r13*8]
+  mov rcx,r12
+  call long giveitem.main.validateptr
+  test rax,rax
+  je short @b
+    mov rcx,rsi
+    lea rdx,[r12+8] // Name / *Name
+    call long giveitem.main.strcmp
+    test al,al
+    jne short @f
+      mov rcx,[r12+8]
+      call long giveitem.main.validateptr
+      test al,al
+      je short @b
+        mov rdx,rsi
+        call long giveitem.main.strcmp
+        test al,al
+        je short @b
+    @@:
+    mov rax,r13
+    ret
+
+giveitem.main.name2id.end:
+mov rcx,giveitem.main.luaerror_namenotfound
+jmp long giveitem.main.luaprint
+
+giveitem.main.giverandom:
+push rbx
+mov rbx,[Factorio.PrototypeList&lt;ItemPrototype&gt;::sortedPrototypes]
+mov rax,[Factorio.PrototypeList&lt;ItemPrototype&gt;::sortedPrototypes+8]
+sub rax,rbx // Item Count*8
+xor rdx,rdx
+xor rcx,rcx
+or cl,8
+div rcx // Item Count
+mov rbx,rax // Save Item Count
+// Create Semi-Random Number
+sub rsp,28
+call ntdll.NtGetTickCount
+mov [rsp],rax
+mov rcx,rsp
+call ntdll.RtlRandomEx
+add rsp,28
+// Create Semi-Random Item ID
+xor rdx,rdx
+div rbx
+inc rdx // Random Item ID
+mov word ptr [giveitem.main.data+4],dx // Item ID
+mov dword ptr [giveitem.main.data+A],3F800000
+mov dword ptr [giveitem.main.data+6],1 // Item Count
+call long giveitem.main.giveitembyid
+pop rbx
+ret
+
+giveitem.main.validateptr:
+test rcx,rcx
+je short @f
+  push rcx
+  push rdx
+  push r8
+  push r9
+  push r10
+  push r11
+  mov rdx,8
+  sub rsp,20
+  call Kernel32.IsBadReadPtr
+  add rsp,20
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rdx
+  pop rcx
+  test rax,rax
+  jne short @f
+    mov al,1
+    ret
+@@:
+xor rax,rax
+ret
+
+giveitem.main.strcmp:
+push rsi
+push rdi
+mov rsi,rcx
+mov rdi,rdx
+xor rax,rax
+dec rdi
+@@:
+lodsb
+test al,al
+je short @f
+inc rdi
+cmp [rdi],al
+je short @b
+  xor al,al
+  pop rdi
+  pop rsi
+  ret
+@@:
+inc rdi
+cmp [rdi],al
+je short @f
+  pop rdi
+  pop rsi
+  xor al,al
+  ret
+@@:
+pop rdi
+pop rsi
+mov al,1
+ret
+
+giveitem.main.giveitembyid:
+movzx rcx,word ptr [giveitem.main.data+4] // Item ID
+call long giveitem.main.idinrange
+test rax,rax
+je long giveitem.main.giveitembyid.end
+  call long giveitem.main.countinrange
+  mov [giveitem.main.data+6],eax
+    call long giveitem.main.getmap
+    test rax,rax
+    je long giveitem.main.giveitembyid.end
+      sub rsp,30 // New Item
+      mov rcx,rsp
+      mov rdx,rax // Factorio.Map
+      movzx r8d,word ptr [giveitem.main.data+4] // Item ID
+      mov r9d,[giveitem.main.data+6] // Item Count
+      sub rsp,30
+      mov eax,[giveitem.main.data+A] // Item Health
+      mov [rsp+20],rax
+      call NewItemStack
+      add rsp,30
+      mov rbx,rax
+      call long giveitem.main.getcursor
+      test rax,rax
+      jne short @f
+        add rsp,30
+        jmp long giveitem.main.giveitembyid.end
+      @@:
+      cmp [giveitem.main.data+12],1
+      je short @f
+        cmp word ptr [rax+6],0
+        je short @f
+          add rsp,30
+          mov rcx,giveitem.main.luaerror_cursorcontainsitem
+          call long giveitem.main.luaprint
+          jmp short giveitem.main.giveitembyid.end
+      @@:
+      mov rcx,rbx
+      mov rdx,rax
+      sub rsp,20
+      call Factorio.ItemStack::swapWith
+      add rsp,50
+      mov rax,1
+      ret
+
+giveitem.main.giveitembyid.end:
+mov rcx,giveitem.main.luaerror_giveitembyid
+jmp long giveitem.main.luaprint
+
+giveitem.main.idinrange:
+mov rax,[Factorio.PrototypeList&lt;ItemPrototype&gt;::sortedPrototypes]
+lea rax,[rax+rcx*8]
+mov rdx,[Factorio.PrototypeList&lt;ItemPrototype&gt;::sortedPrototypes+8]
+cmp rax,rdx
+jb short @f
+  mov rcx,giveitem.main.luaerror_idnotinrange
+  jmp long giveitem.main.luaprint
+@@:
+mov rax,1
+ret
+
+giveitem.main.countinrange:
+mov rax,[Factorio.PrototypeList&lt;ItemPrototype&gt;::sortedPrototypes]
+movzx rcx,word ptr [giveitem.main.data+4] // Item ID
+mov rcx,[rax+rcx*8]
+test rcx,rcx
+jne short @f
+  mov rcx,giveitem.main.luaerror_unusualerror
+  jmp long giveitem.main.luaprint
+@@:
+mov eax,[rcx+454] // Max Amount
+cmp [giveitem.main.data+6],eax
+jle short @f
+  push rcx
+  mov rcx,giveitem.main.luaerror_stacktobig
+  call long giveitem.main.luaprint
+  pop rcx
+  mov eax,[rcx+454]
+  ret
+@@:
+mov eax,[giveitem.main.data+6]
+ret
+
+giveitem.main.luaprint:
+cmp [giveitem.main.data+E],1
+je short @f
+  xor rax,rax
+  ret
+@@:
+test spl,8
+je short @f
+  and [giveitem.main.luaprint.stackaligned],0
+  sub rsp,8
+@@:
+mov rdx,rcx
+mov rcx,giveitem.main.luaprintfunc
+sub rsp,20
+call CELUA_ExecuteFunction
+add rsp,20
+cmp [giveitem.main.luaprint.stackaligned],0
+jne short @f
+  add rsp,8
+@@:
+xor rax,rax
+or [giveitem.main.luaprint.stackaligned],1
+ret
+
+giveitem.main.getmap:
+mov rax,[Factorio.Global] // Factorio.GlobalContext
+test rax,rax
+je short @f
+  mov rax,[rax+68] // Factorio.Game
+  test rax,rax
+  je short @f
+    mov rax,[rax+68] // Factorio.Map
+    test rax,rax
+    je short @f
+      ret
+@@:
+mov rcx,giveitem.main.luaerror_mapnotfound
+jmp long giveitem.main.luaprint
+
+giveitem.main.getcursor:
+call long giveitem.main.getcharacter
+test rax,rax
+je short @f
+  lea rax,[rax+528]
+  ret
+
+@@:
+mov rcx,giveitem.main.luaerror_cursornotfound
+jmp long giveitem.main.luaprint
+
+giveitem.main.getcharacter:
+mov rax,[Factorio.Global] // Factorio.GlobalContext
+test rax,rax
+je short @f
+  mov rax,[rax+68] // Factorio.Game
+  test rax,rax
+  je short @f
+    mov rax,[rax+B0] // Factorio.Player
+    test rax,rax
+    je short @f
+      mov rax,[rax+60] // Factorio.CharacterController
+      test rax,rax
+      je short @f
+        mov rax,[rax+198] // Factorio.Character
+        test rax,rax
+        je short @f
+          ret
+@@:
+mov rcx,giveitem.main.luaerror_characternotfound
+jmp long giveitem.main.luaprint
+
+giveitem.main.luaprint.stackaligned:
+dd 1
+
+giveitem.main.shouldend:
+dd 0
+
+giveitem.main.data:
+dd 0 // What to do
+dw 0 // Item ID
+dd 1 // Item Count
+dd 3F800000 // Item Health
+dd 1,0 // Print Errors+Warnings / ForceReplace
+
+giveitem.main.luaprintfunc:
+db 'print(readString(parameter,256))',0
+
+giveitem.main.luaerror_idnotinrange:
+db 'Error:The Item ID specified is not inside the range of possible IDs',0
+giveitem.main.luaerror_mapnotfound:
+db 'Error:A Pointer to Factorio.Map could not be found!',0
+giveitem.main.luaerror_characternotfound:
+db 'Error:A Pointer to Factorio.Character could not be found!',0
+giveitem.main.luaerror_cursornotfound:
+db 'Error:A Pointer to Factorio.Cursor could not be found!',0
+giveitem.main.luaerror_unusualerror:
+db 'Error:An Unusual Error occured!',0
+giveitem.main.luaerror_stacktobig:
+db 'Warning:The Item Count specified is to big and has been adjusted to be the max Amount',0
+giveitem.main.luaerror_giveitembyid:
+db 'ERROR:Something went wrong while trying to run the GiveItemById Function',0
+giveitem.main.luaerror_cursorcontainsitem:
+db 'Error:There is still a Item in the Cursor Slot!',0
+giveitem.main.luaerror_namenotfound:
+db 'Error:No Item with this Name could be found!',0
+
+giveitem.main.giveitembyname.name:
+db '',0
+
+[DISABLE]
+{$lua}
+if syntaxcheck then return end
+if writeInteger(getAddressSafe("giveitem.main.data-4"),1) then
+  unregisterSymbol("giveitem.main")
+  unregisterSymbol("giveitem.main.data")
+  unregisterSymbol("giveitem.main.giveitembyname.name")
+end
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>357</ID>
+              <Description>"Give Item"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:By ID
+2:By Name
+3:Give Random
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>giveitem.main.data</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>358</ID>
+              <Description>"Item ID"</Description>
+              <VariableType>2 Bytes</VariableType>
+              <Address>giveitem.main.data+4</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>359</ID>
+              <Description>"Item Name"</Description>
+              <VariableType>String</VariableType>
+              <Length>256</Length>
+              <Unicode>0</Unicode>
+              <CodePage>0</CodePage>
+              <ZeroTerminate>1</ZeroTerminate>
+              <Address>giveitem.main.giveitembyname.name</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>360</ID>
+              <Description>"Item Count"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>giveitem.main.data+6</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>361</ID>
+              <Description>"Item Health"</Description>
+              <VariableType>Float</VariableType>
+              <Address>giveitem.main.data+A</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>362</ID>
+              <Description>"Print Errors/Warnings"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>giveitem.main.data+E</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>363</ID>
+              <Description>"Force Cursor Replacement"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <VariableType>4 Bytes</VariableType>
+              <Address>giveitem.main.data+12</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>373</ID>
+          <Description>"Infinite Ore Deposits"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.ResourceEntity::mineMe+1CA)
+define(bytes,83 E8 01)
+
+[ENABLE]
+assert(address,bytes)
+
+address+2:
+db 00
+
+[DISABLE]
+
+address+2:
+  db 01
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.ResourceEntity::mineMe+1CD
+
+"Factorio.exe"+2711A1: 0F B6 43 58              -  movzx eax,byte ptr [rbx+58]
+"Factorio.exe"+2711A5: C0 E8 04                 -  shr al,04
+"Factorio.exe"+2711A8: A8 01                    -  test al,01
+"Factorio.exe"+2711AA: 74 47                    -  je Factorio.exe+2711F3
+"Factorio.exe"+2711AC: B0 01                    -  mov al,01
+"Factorio.exe"+2711AE: EB 76                    -  jmp Factorio.exe+271226
+"Factorio.exe"+2711B0: 8B 81 88 00 00 00        -  mov eax,[rcx+00000088]
+"Factorio.exe"+2711B6: 85 C0                    -  test eax,eax
+"Factorio.exe"+2711B8: 74 39                    -  je Factorio.exe+2711F3
+"Factorio.exe"+2711BA: 83 E8 01                 -  sub eax,01
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+2711BD: 89 81 88 00 00 00        -  mov [rcx+00000088],eax
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+2711C3: 75 2E                    -  jne Factorio.exe+2711F3
+"Factorio.exe"+2711C5: C6 44 24 38 4F           -  mov byte ptr [rsp+38],4F
+"Factorio.exe"+2711CA: 48 89 5C 24 40           -  mov [rsp+40],rbx
+"Factorio.exe"+2711CF: 48 8B 81 80 00 00 00     -  mov rax,[rcx+00000080]
+"Factorio.exe"+2711D6: 48 8B 88 60 03 00 00     -  mov rcx,[rax+00000360]
+"Factorio.exe"+2711DD: 48 85 C9                 -  test rcx,rcx
+"Factorio.exe"+2711E0: 74 0F                    -  je Factorio.exe+2711F1
+"Factorio.exe"+2711E2: 48 8D 54 24 38           -  lea rdx,[rsp+38]
+"Factorio.exe"+2711E7: 48 8B 49 78              -  mov rcx,[rcx+78]
+"Factorio.exe"+2711EB: E8 80 4B 82 00           -  call Factorio.exe+A95D70
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>378</ID>
+          <Description>"Infinite Mouse Cursor Items"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.ItemStack::swapWith)
+define(bytes,40 55 56 41 56)
+
+[ENABLE]
+
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.ItemStack::swapWith)
+
+label(code)
+label(return)
+label(getcursor)
+label(getcharacter)
+label(placeholder)
+label(clonetoplaceholder)
+
+newmem:
+sub rsp,8
+call long getcursor
+cmp rcx,rax
+je short @f
+cmp rdx,rax
+jne short code
+cmp word ptr [rcx+6],0
+jne short code
+mov [rsp],rcx
+mov rcx,rdx
+call clonetoplaceholder
+mov rcx,[rsp]
+mov rdx,rax
+jmp short code
+@@:
+cmp word ptr [rdx+6],0
+jne short code
+call clonetoplaceholder
+mov rcx,rax
+
+code:
+  add rsp,8
+  push rbp
+  push rsi
+  push r14
+  jmp return
+
+getcursor:
+call long getcharacter
+test rax,rax
+je short @f
+  lea rax,[rax+528]
+  ret
+@@:
+ret
+
+getcharacter:
+mov rax,[Factorio.Global] // Factorio.GlobalContext
+test rax,rax
+je short @f
+  mov rax,[rax+68] // Factorio.Game
+  test rax,rax
+  je short @f
+    mov rax,[rax+B0] // Factorio.Player
+    test rax,rax
+    je short @f
+      mov rax,[rax+60] // Factorio.CharacterController
+      test rax,rax
+      je short @f
+        mov rax,[rax+198] // Factorio.Character
+        test rax,rax
+@@:
+ret
+
+clonetoplaceholder:
+push rbx
+push r12
+mov r12,6
+lea rbx,[placeholder]
+@@:
+dec r12
+js short @f
+mov rax,[rcx+r12*8]
+mov [rbx+r12*8],rax
+jmp short @b
+@@:
+mov rax,rbx
+pop r12
+pop rbx
+ret
+
+align 4 CC
+
+placeholder:
+
+address:
+  jmp newmem
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.ItemStack::swapWith
+
+"Factorio.exe"+6AE0E6: CC                       -  int 3
+"Factorio.exe"+6AE0E7: CC                       -  int 3
+"Factorio.exe"+6AE0E8: CC                       -  int 3
+"Factorio.exe"+6AE0E9: CC                       -  int 3
+"Factorio.exe"+6AE0EA: CC                       -  int 3
+"Factorio.exe"+6AE0EB: CC                       -  int 3
+"Factorio.exe"+6AE0EC: CC                       -  int 3
+"Factorio.exe"+6AE0ED: CC                       -  int 3
+"Factorio.exe"+6AE0EE: CC                       -  int 3
+"Factorio.exe"+6AE0EF: CC                       -  int 3
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+6AE0F0: 40 55                    -  push rbp
+"Factorio.exe"+6AE0F2: 56                       -  push rsi
+"Factorio.exe"+6AE0F3: 41 56                    -  push r14
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+6AE0F5: 48 8D 6C 24 B9           -  lea rbp,[rsp-47]
+"Factorio.exe"+6AE0FA: 48 81 EC 90 00 00 00     -  sub rsp,00000090
+"Factorio.exe"+6AE101: 48 8B 42 10              -  mov rax,[rdx+10]
+"Factorio.exe"+6AE105: 48 8B F2                 -  mov rsi,rdx
+"Factorio.exe"+6AE108: 4C 8B F1                 -  mov r14,rcx
+"Factorio.exe"+6AE10B: 48 39 41 10              -  cmp [rcx+10],rax
+"Factorio.exe"+6AE10F: 75 49                    -  jne Factorio.exe+6AE15A
+"Factorio.exe"+6AE111: 0F B7 41 06              -  movzx eax,word ptr [rcx+06]
+"Factorio.exe"+6AE115: 0F B7 4A 06              -  movzx ecx,word ptr [rdx+06]
+"Factorio.exe"+6AE119: 66 41 89 4E 06           -  mov [r14+06],cx
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>221</ID>
+          <Description>"Class Pointers"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>FF0000</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>225</ID>
+              <Description>"Factorio.GlobalContext"</Description>
+              <LastState Value="0000021288EBEC60" RealAddress="7FF737301B00"/>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>222</ID>
+              <Description>"Factorio.InputHandlerAllegro"</Description>
+              <LastState Value="00000212A487FFC0" RealAddress="21288EBECB0"/>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>50</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>371</ID>
+              <Description>"Factorio.Game"</Description>
+              <LastState Value="000002129B43CED0" RealAddress="21288EBECC8"/>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>226</ID>
+              <Description>"Factorio.agui"</Description>
+              <LastState Value="000002129001CA50" RealAddress="21288EBECC0"/>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>60</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>228</ID>
+              <Description>"Factorio.SteamConetxt"</Description>
+              <LastState Value="000002128B9D7430" RealAddress="21288EBEF10"/>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>2B0</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>238</ID>
+          <Description>"Pointers from Factorio.Global"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>FF0000</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>258</ID>
+              <Description>"Factorio.Player"</Description>
+              <LastState Value="00000212C5D4FB20" RealAddress="2129B43CF80"/>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>B0</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>282</ID>
+              <Description>"Factorio.GameView"</Description>
+              <LastState Value="00000212CEDF52A0" RealAddress="2129B43CF68"/>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>98</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>259</ID>
+              <Description>"Factorio.Character"</Description>
+              <LastState Value="00007FF736C711F8" RealAddress="212CEDF62D8"/>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>198</Offset>
+                <Offset>60</Offset>
+                <Offset>B0</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>294</ID>
+              <Description>"Factorio.EntitySelector"</Description>
+              <LastState Value="7472655672656E6E" RealAddress="7FF736C71840"/>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>648</Offset>
+                <Offset>198</Offset>
+                <Offset>60</Offset>
+                <Offset>B0</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>264</ID>
+              <Description>"Factorio.Surface (Current)"</Description>
+              <LastState Value="6E7275546C696172" RealAddress="7FF736C71270"/>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>78</Offset>
+                <Offset>198</Offset>
+                <Offset>60</Offset>
+                <Offset>B0</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>263</ID>
+              <Description>"Factorio.Inventory VTable"</Description>
+              <LastState Value="00007FF735DEFE70" RealAddress="7FF736B32888"/>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Inventory::`vftable'</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>237</ID>
+              <Description>"Factorio.CharacterController"</Description>
+              <LastState Value="00000212CEDF6140" RealAddress="212C5D4FB80"/>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>60</Offset>
+                <Offset>B0</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>260</ID>
+              <Description>"Factorio.GameRenderer"</Description>
+              <LastState Value="00000212C9CD7C60" RealAddress="212CEDF5428"/>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>188</Offset>
+                <Offset>98</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>266</ID>
+              <Description>"Factorio.Map"</Description>
+              <LastState Value="0000021297AB16C0" RealAddress="2129B43CF38"/>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>387</ID>
+              <Description>"Factorio.ForceManager"</Description>
+              <LastState Value="00000212A4F6BE90" RealAddress="21297AB1968"/>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>2A8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>289</ID>
+              <Description>"Factorio.ForceData"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>388</ID>
+                  <Description>"Factorio.ForceManager.Player"</Description>
+                  <LastState Value="000002129FF265D0" RealAddress="212A4F6BE90"/>
+                  <ShowAsHex>1</ShowAsHex>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>8 Bytes</VariableType>
+                  <Address>Factorio.Global</Address>
+                  <Offsets>
+                    <Offset>0</Offset>
+                    <Offset>2A8</Offset>
+                    <Offset>68</Offset>
+                    <Offset>68</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>389</ID>
+                  <Description>"Factorio.ForceManager.Enemy"</Description>
+                  <LastState Value="000002129FF28560" RealAddress="212A4F6BE98"/>
+                  <ShowAsHex>1</ShowAsHex>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>8 Bytes</VariableType>
+                  <Address>Factorio.Global</Address>
+                  <Offsets>
+                    <Offset>8</Offset>
+                    <Offset>2A8</Offset>
+                    <Offset>68</Offset>
+                    <Offset>68</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>390</ID>
+                  <Description>"Factorio.ForceManager.Neutral"</Description>
+                  <LastState Value="000002129FF23350" RealAddress="212A4F6BEA0"/>
+                  <ShowAsHex>1</ShowAsHex>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>8 Bytes</VariableType>
+                  <Address>Factorio.Global</Address>
+                  <Offsets>
+                    <Offset>10</Offset>
+                    <Offset>2A8</Offset>
+                    <Offset>68</Offset>
+                    <Offset>68</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>265</ID>
+              <Description>"Factorio.AllSurfaces"</Description>
+              <LastState Value="00000212D2FA7400" RealAddress="21297AB1900"/>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>8 Bytes</VariableType>
+              <Address>Factorio.Global</Address>
+              <Offsets>
+                <Offset>240</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>379</ID>
+          <Description>"Inf PowerArmor Battery"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>define(address,Factorio.BatteryEquipment::availableInBatteries)
+define(bytes,48 8B 41 20 F2 0F 10 40 20)
+
+[ENABLE]
+assert(address,bytes)
+alloc(newmem,$1000,Factorio.BatteryEquipment::availableInBatteries)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  mov rax,[rcx+20]
+  movsd xmm0,[rax+28]
+  movsd [rax+20],xmm0
+  movsd xmm0,[rax+20]
+  jmp return
+
+address:
+  jmp newmem
+  nop 4
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: Factorio.BatteryEquipment::availableInBatteries
+
+"Factorio.exe"+2ED476: CC                          -  int 3 
+"Factorio.exe"+2ED477: CC                          -  int 3 
+"Factorio.exe"+2ED478: CC                          -  int 3 
+"Factorio.exe"+2ED479: CC                          -  int 3 
+"Factorio.exe"+2ED47A: CC                          -  int 3 
+"Factorio.exe"+2ED47B: CC                          -  int 3 
+"Factorio.exe"+2ED47C: CC                          -  int 3 
+"Factorio.exe"+2ED47D: CC                          -  int 3 
+"Factorio.exe"+2ED47E: CC                          -  int 3 
+"Factorio.exe"+2ED47F: CC                          -  int 3 
+// ---------- INJECTING HERE ----------
+"Factorio.exe"+2ED480: 48 8B 41 20                 -  mov rax,[rcx+20]
+"Factorio.exe"+2ED484: F2 0F 10 40 20              -  movsd xmm0,[rax+20]
+// ---------- DONE INJECTING  ----------
+"Factorio.exe"+2ED489: C3                          -  ret 
+"Factorio.exe"+2ED48A: CC                          -  int 3 
+"Factorio.exe"+2ED48B: CC                          -  int 3 
+"Factorio.exe"+2ED48C: CC                          -  int 3 
+"Factorio.exe"+2ED48D: CC                          -  int 3 
+"Factorio.exe"+2ED48E: CC                          -  int 3 
+"Factorio.exe"+2ED48F: CC                          -  int 3 
+"Factorio.exe"+2ED490: 48 8B 41 20                 -  mov rax,[rcx+20]
+"Factorio.exe"+2ED494: F2 0F 10 40 28              -  movsd xmm0,[rax+28]
+"Factorio.exe"+2ED499: C3                          -  ret 
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>380</ID>
+          <Description>"Belts don't move Player"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Factorio.Character::hasBeltImmunity,48 89 5C)
+
+Factorio.Character::hasBeltImmunity:
+db 0C 01 C3
+
+[DISABLE]
+Factorio.Character::hasBeltImmunity:
+db 48 89 5C
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>383</ID>
+          <Description>"Inf Ammo"</Description>
+          <LastState/>
+          <Color>FF0000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Factorio.Shooter::useAmmo,48 89 5C)
+Factorio.Shooter::useAmmo:
+db 0C 01 C3
+[DISABLE]
+
+Factorio.Shooter::useAmmo:
+db 48 89 5C
+</AssemblerScript>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>399</ID>
+      <Description>"Global"</Description>
+      <LastState Value="1086" RealAddress="21288EBEC60"/>
+      <ShowAsSigned>0</ShowAsSigned>
+      <VariableType>4 Bytes</VariableType>
+      <Address>Factorio.Global</Address>
+      <Offsets>
+        <Offset>0</Offset>
+      </Offsets>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>394</ID>
+      <Description>"Factorio.Player"</Description>
+      <LastState Value="00000212C5D4FB20" RealAddress="2129B43CF80"/>
+      <ShowAsHex>1</ShowAsHex>
+      <ShowAsSigned>0</ShowAsSigned>
+      <VariableType>8 Bytes</VariableType>
+      <Address>Factorio.Global</Address>
+      <Offsets>
+        <Offset>B0</Offset>
+        <Offset>68</Offset>
+      </Offsets>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>424</ID>
+      <Description>"StructuresNumberPointers"</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>450</ID>
+          <Description>"BuildingArea (game)"</Description>
+          <LastState Value="CEB8AAA0" RealAddress="2129FF266B0"/>
+          <ShowAsHex>1</ShowAsHex>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>589</ID>
+          <Description>"TotalNumber of minner"</Description>
+          <LastState Value="8" RealAddress="212D1DE8890"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>2 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>120</Offset>
+            <Offset>C0</Offset>
+            <Offset>0</Offset>
+            <Offset>240</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>675</ID>
+          <Description>"assembling-machine-1"</Description>
+          <LastState Value="3" RealAddress="212A4F92760"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>70</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>687</ID>
+          <Description>"assembling-machine-2"</Description>
+          <LastState Value="3" RealAddress="212A4F92764"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>74</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>680</ID>
+          <Description>"boiler"</Description>
+          <LastState Value="7" RealAddress="212A4F927D8"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>E8</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>590</ID>
+          <Description>"burner-mining-drill"</Description>
+          <LastState Value="0" RealAddress="212A4F927E4"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>F4</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>698</ID>
+          <Description>"chemical-plant"</Description>
+          <LastState Value="2" RealAddress="212A4F927FC"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>10C</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>683</ID>
+          <Description>"electric-mining-drill"</Description>
+          <LastState Value="8" RealAddress="212A4F92888"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>198</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>676</ID>
+          <Description>"express-belt"</Description>
+          <LastState Value="3" RealAddress="212A4F92AC0"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>3D0</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>674</ID>
+          <Description>"express-inserter"</Description>
+          <LastState Value="6" RealAddress="212A4F9293C"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>24C</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>691</ID>
+          <Description>"express-splitter"</Description>
+          <LastState Value="5" RealAddress="212A4F92A78"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>388</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>689</ID>
+          <Description>"fast-inserter"</Description>
+          <LastState Value="5" RealAddress="212A4F928D4"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>1E4</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>672</ID>
+          <Description>"iron-chest"</Description>
+          <LastState Value="12" RealAddress="212A4F92A8C"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>39C</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>678</ID>
+          <Description>"lab"</Description>
+          <LastState Value="20" RealAddress="212A4F9294C"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>25C</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>690</ID>
+          <Description>"long-handed-inserter"</Description>
+          <LastState Value="6" RealAddress="212A4F92994"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>2A4</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>681</ID>
+          <Description>"offshore-pump"</Description>
+          <LastState Value="4" RealAddress="212A4F929BC"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>2CC</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>699</ID>
+          <Description>"oil-refinery"</Description>
+          <LastState Value="4" RealAddress="212A4F929C0"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>2D0</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>696</ID>
+          <Description>"passive-provider-chest"</Description>
+          <LastState Value="6" RealAddress="212A4F92984"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>294</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>677</ID>
+          <Description>"pipe"</Description>
+          <LastState Value="6" RealAddress="212A4F929D0"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>2E0</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>700</ID>
+          <Description>"pipe-to-ground"</Description>
+          <LastState Value="6" RealAddress="212A4F929D4"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>2E4</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>694</ID>
+          <Description>"pump"</Description>
+          <LastState Value="7" RealAddress="212A4F929F0"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>300</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>684</ID>
+          <Description>"pumpjack"</Description>
+          <LastState Value="0" RealAddress="212A4F929F4"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>304</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>686</ID>
+          <Description>"radar"</Description>
+          <LastState Value="3" RealAddress="212A4F929F8"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>308</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>693</ID>
+          <Description>"roboport"</Description>
+          <LastState Value="5" RealAddress="212A4F92A04"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>314</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>673</ID>
+          <Description>"small-electric-pole"</Description>
+          <LastState Value="10" RealAddress="212A4F92A2C"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>33C</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>595</ID>
+          <Description>"steam-engine"</Description>
+          <LastState Value="4" RealAddress="212A4F92A84"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>394</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>685</ID>
+          <Description>"steel-furnace"</Description>
+          <LastState Value="4" RealAddress="212A4F92A90"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>3A0</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>406</ID>
+          <Description>"stone-furnace"</Description>
+          <LastState Value="0" RealAddress="212A4F92A94"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>3A4</Offset>
+            <Offset>30</Offset>
+            <Offset>28</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>695</ID>
+          <Description>"storage-chest"</Description>
+          <LastState Value="7" RealAddress="212A4F9298C"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>29C</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>697</ID>
+          <Description>"storage-tank"</Description>
+          <LastState Value="4" RealAddress="212A4F92A9C"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>3AC</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>688</ID>
+          <Description>"underground-belt"</Description>
+          <LastState Value="6" RealAddress="212A4F92AD0"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>"factorio.exe"+01C21B00</Address>
+          <Offsets>
+            <Offset>3E0</Offset>
+            <Offset>48</Offset>
+            <Offset>20</Offset>
+            <Offset>E0</Offset>
+            <Offset>2C8</Offset>
+            <Offset>68</Offset>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>427</ID>
+      <Description>"Researches Pointers"</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>441</ID>
+          <Description>"ResearchArea"</Description>
+          <LastState Value="9B43CED0" RealAddress="21288EBECC8"/>
+          <ShowAsHex>1</ShowAsHex>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>factorio.exe+1C21B00</Address>
+          <Offsets>
+            <Offset>68</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>601</ID>
+          <Description>"Red"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>443</ID>
+              <Description>"automation"</Description>
+              <LastState Value="1" RealAddress="212C3928DD4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>2 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>f4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>444</ID>
+              <Description>"logistics"</Description>
+              <LastState Value="1" RealAddress="212C39292E4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>2 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>604</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>445</ID>
+              <Description>"electronics"</Description>
+              <LastState Value="1" RealAddress="212C3928F84"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>2a4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>449</ID>
+              <Description>"fast-inserter"</Description>
+              <LastState Value="1" RealAddress="212C3929014"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>334</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>448</ID>
+              <Description>"steel-processing"</Description>
+              <LastState Value="1" RealAddress="212C392A214"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>1534</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>447</ID>
+              <Description>"steel-axe"</Description>
+              <LastState Value="1" RealAddress="212C392A3C4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>16e4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>467</ID>
+              <Description>"logistic-science-pack"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>2 Bytes</VariableType>
+              <Address>"factorio.exe"+01C21B00</Address>
+              <Offsets>
+                <Offset>64</Offset>
+                <Offset>188</Offset>
+                <Offset>328</Offset>
+                <Offset>110</Offset>
+                <Offset>80</Offset>
+                <Offset>98</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>602</ID>
+          <Description>"Green"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>454</ID>
+              <Description>"automation-2"</Description>
+              <LastState Value="1" RealAddress="212C3928E64"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>2 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>184</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>600</ID>
+              <Description>"advanced-material-processing"</Description>
+              <LastState Value="1" RealAddress="212C392A334"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>1654</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>606</ID>
+              <Description>"engine"</Description>
+              <LastState Value="1" RealAddress="212C3929884"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>BA4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>607</ID>
+              <Description>"fluid-handling"</Description>
+              <LastState Value="1" RealAddress="212C392BD14"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>3034</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>649</ID>
+              <Description>"oil-processing"</Description>
+              <LastState Value="1" RealAddress="212C392BC84"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>2FA4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>654</ID>
+              <Description>"plastics"</Description>
+              <LastState Value="1" RealAddress="212C392BF54"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>3274</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>650</ID>
+              <Description>"advanced-electronics"</Description>
+              <LastState Value="1" RealAddress="212C39290A4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>3C4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>651</ID>
+              <Description>"sulfur-processing"</Description>
+              <LastState Value="1" RealAddress="212C392BEC4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>31E4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>652</ID>
+              <Description>"chemical-science-pack"</Description>
+              <LastState Value="1" RealAddress="212C3929F44"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>1264</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>653</ID>
+              <Description>"battery"</Description>
+              <LastState Value="1" RealAddress="212C3929A34"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>D54</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>644</ID>
+              <Description>"modules"</Description>
+              <LastState Value="1" RealAddress="212C392F0D4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>63F4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>645</ID>
+              <Description>"productivity-module"</Description>
+              <LastState Value="1" RealAddress="212C392F314"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>6634</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>646</ID>
+              <Description>"logistics-2"</Description>
+              <LastState Value="1" RealAddress="212C3929374"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>694</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>647</ID>
+              <Description>"railway"</Description>
+              <LastState Value="1" RealAddress="212C392A724"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>1A44</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>648</ID>
+              <Description>"speed-module"</Description>
+              <LastState Value="1" RealAddress="212C392F164"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>6484</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>453</ID>
+              <Description>"advanced-oil-processing"</Description>
+              <LastState Value="1" RealAddress="212C392BDA4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>30c4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>639</ID>
+              <Description>"lubricant"</Description>
+              <LastState Value="1" RealAddress="212C39299A4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>CC4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>640</ID>
+              <Description>"electric-engine"</Description>
+              <LastState Value="1" RealAddress="212C3929914"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>C34</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>641</ID>
+              <Description>"robotics"</Description>
+              <LastState Value="1" RealAddress="212C392A964"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>1C84</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>642</ID>
+              <Description>"advanced-electronics-2"</Description>
+              <LastState Value="1" RealAddress="212C3929134"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>454</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>643</ID>
+              <Description>"advanced-material-processing-2"</Description>
+              <LastState Value="1" RealAddress="212C392A454"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>1774</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>634</ID>
+              <Description>"toolbelt"</Description>
+              <LastState Value="1" RealAddress="212C392B414"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>2734</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>635</ID>
+              <Description>"research-speed-1"</Description>
+              <LastState Value="1" RealAddress="212C392B4A4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>27C4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>636</ID>
+              <Description>"research-speed-2"</Description>
+              <LastState Value="1" RealAddress="212C392B534"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>2854</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>637</ID>
+              <Description>"flammables"</Description>
+              <LastState Value="1" RealAddress="212C392C4F4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>3814</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>638</ID>
+              <Description>"concrete"</Description>
+              <LastState Value="1" RealAddress="212C392A4E4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>1804</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>603</ID>
+          <Description>"Blue"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>660</ID>
+              <Description>"construction-robotics"</Description>
+              <LastState Value="1" RealAddress="212C392A9F4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>1D14</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>667</ID>
+              <Description>"worker-robots-speed-1"</Description>
+              <LastState Value="1" RealAddress="212C392ACC4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>1FE4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>666</ID>
+              <Description>"worker-robots-speed-2"</Description>
+              <LastState Value="1" RealAddress="212C392AD54"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>2074</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>665</ID>
+              <Description>"production-science-pack"</Description>
+              <LastState Value="1" RealAddress="212C392A0F4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>1414</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>664</ID>
+              <Description>"low-density-structure"</Description>
+              <LastState Value="1" RealAddress="212C392F704"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>6A24</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>663</ID>
+              <Description>"utility-science-pack"</Description>
+              <LastState Value="1" RealAddress="212C392A2A4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>15C4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>662</ID>
+              <Description>"rocket-fuel"</Description>
+              <LastState Value="1" RealAddress="212C392F824"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>6B44</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>661</ID>
+              <Description>"productivity-module-2"</Description>
+              <LastState Value="1" RealAddress="212C392F3A4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>66C4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>452</ID>
+              <Description>"speed-module-2"</Description>
+              <LastState Value="1" RealAddress="212C392F1F4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>6514</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>657</ID>
+          <Description>"Purple"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>658</ID>
+              <Description>"productivity-module-3"</Description>
+              <LastState Value="1" RealAddress="212C392F434"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>6754</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>659</ID>
+              <Description>"speed-module-3"</Description>
+              <LastState Value="1" RealAddress="212C392F284"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>65A4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>669</ID>
+              <Description>"effect-transmission"</Description>
+              <LastState Value="1" RealAddress="212C392F674"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>6994</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>668</ID>
+              <Description>"research-speed-3"</Description>
+              <LastState Value="1" RealAddress="212C392B5C4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>28E4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>604</ID>
+          <Description>"Yellow"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>670</ID>
+              <Description>"rocket-control-unit"</Description>
+              <LastState Value="1" RealAddress="212C392F794"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>6AB4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>451</ID>
+              <Description>"rocket-silo"</Description>
+              <LastState Value="1" RealAddress="212C392F8B4"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>factorio.exe+1C21B00</Address>
+              <Offsets>
+                <Offset>6bd4</Offset>
+                <Offset>0</Offset>
+                <Offset>8</Offset>
+                <Offset>70</Offset>
+                <Offset>2c8</Offset>
+                <Offset>68</Offset>
+                <Offset>68</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <CheatCodes>
+    <CodeEntry Color="20000000">
+      <Description>Code :mov [rcx+59],al</Description>
+      <AddressString>factorio.exe+8939F5</AddressString>
+      <Before>
+        <Byte>01</Byte>
+        <Byte>EB</Byte>
+        <Byte>02</Byte>
+        <Byte>32</Byte>
+        <Byte>C0</Byte>
+      </Before>
+      <Actual>
+        <Byte>88</Byte>
+        <Byte>41</Byte>
+        <Byte>59</Byte>
+      </Actual>
+      <After>
+        <Byte>49</Byte>
+        <Byte>8B</Byte>
+        <Byte>48</Byte>
+        <Byte>70</Byte>
+        <Byte>E8</Byte>
+      </After>
+    </CodeEntry>
+  </CheatCodes>
+  <UserdefinedSymbols/>
+  <Comments>By Bloodybone
+</Comments>
+</CheatTable>
