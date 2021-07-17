@@ -4,6 +4,17 @@
  * @additionnalAuthor Tignass
  * @version 1.1 on May 1st 2021 
  */
+ 
+ 
+state("Factorio", "1.1.36-steam") {
+	//Check whether we are in a game and whether or not the game is paused"
+	ulong 	gamePointer : 0x1C24860, 0x68;
+	ulong	researchArea: 0x1C24860, 0x68, 0x68, 0x2C8, 0x70, 0x8, 0x0;
+	ulong	buildingNumberArea:	0x1C24860, 0x68, 0x68, 0x2C8, 0xE0, 0x28, 0x30;
+	byte	gamePaused:   0x1C24860, 0x68, 0x68, 0x270;
+	byte 	numRockets: 0x1C24860, 0x68, 0x68, 0x2A8, 0x0, 0x5d8;
+}
+
 state("Factorio", "1.1.33.58442-steam") {
 	//Check whether we are in a game and whether or not the game is paused"
 	ulong 	gamePointer : 0x1C21B00, 0x68;
@@ -59,6 +70,8 @@ init{
         version = "1.1.33.58442-steam";
 	else if (modules.First().ModuleMemorySize == 30785536)
         version = "1.1.34-gog";
+	else if (modules.First().ModuleMemorySize == 30797824)
+        version = "1.1.36-steam";
 	else
 		print("No known version MemorySize " + modules.First().ModuleMemorySize);
 }	
@@ -68,7 +81,7 @@ startup {
 	
 	// Object structure (Parent, Id, Description, Pointer, defaultSelection)
 	// if Id has a # followed by an integer (ex: #5) in it, will create the split whith this specific Number of building
-	// exemple: "stone-furnace#5" will split when there is 5 stone-furnaces built
+	// Example: "stone-furnace#5" will split when there is 5 stone-furnaces built
 	
 	//////////////////////////////////////////////////////////////////////
 	// This section is used to configure researches
@@ -212,34 +225,34 @@ startup {
 	//////////////////////////////////////////////////////////////////////
 	Object [,] BuildingSplitsConfig =
 	{
-		// { "Exemple", "stone-furnace", 00, true },
-		// { "Exemple", "burner-mining-drill", 00, true },
-		// { "Exemple", "iron-chest", 00, true },
-		// { "Exemple", "offshore-pump", 00, true },
-		// { "Exemple", "boiler", 00, true },
-		// { "Exemple", "steam-engine", 00, true },
-		// { "Exemple", "pump", 00, true },
-		// { "Exemple", "electric-mining-drill", 00, true },
-		// { "Exemple", "small-electric-pole", 00, false },
-		// { "Exemple", "lab", 00, true },
-		// { "Exemple", "pipe", 00, false },
-		// { "Exemple", "pipe-to-ground", 00, false },
-		// { "Exemple", "assembling-machine-1", 00, true },
-		// { "Exemple", "express-inserter", 00, false },
-		// { "Exemple", "express-belt", 00, false },
-		// { "Exemple", "express-splitter", 00, true },
-		// { "Exemple", "long-handed-inserter", 00, true },
-		// { "Exemple", "fast-inserter", 00, false },
-		// { "Exemple", "underground-belt", 00, true },
-		// { "Exemple", "assembling-machine-2", 00, true },
-		// { "Exemple", "steel-furnace", 00, true },
-		// { "Exemple", "pumpjack", 00, true },
-		// { "Exemple", "oil-refinery", 00, true },
-		// { "Exemple", "chemical-plant", 00, true },
-		// { "Exemple", "storage-tank", 00, true },
-		// { "Exemple", "storage-chest", 00, true },
-		// { "Exemple", "passive-provider-chest", 00, true },
-		// { "Exemple", "roboport", 00, true },
+		// { "Example", "stone-furnace", 00, true },
+		// { "Example", "burner-mining-drill", 00, true },
+		// { "Example", "iron-chest", 00, true },
+		// { "Example", "offshore-pump", 00, true },
+		// { "Example", "boiler", 00, true },
+		// { "Example", "steam-engine", 00, true },
+		// { "Example", "pump", 00, true },
+		// { "Example", "electric-mining-drill", 00, true },
+		// { "Example", "small-electric-pole", 00, false },
+		// { "Example", "lab", 00, true },
+		// { "Example", "pipe", 00, false },
+		// { "Example", "pipe-to-ground", 00, false },
+		// { "Example", "assembling-machine-1", 00, true },
+		// { "Example", "express-inserter", 00, false },
+		// { "Example", "express-belt", 00, false },
+		// { "Example", "express-splitter", 00, true },
+		// { "Example", "long-handed-inserter", 00, true },
+		// { "Example", "fast-inserter", 00, false },
+		// { "Example", "underground-belt", 00, true },
+		// { "Example", "assembling-machine-2", 00, true },
+		// { "Example", "steel-furnace", 00, true },
+		// { "Example", "pumpjack", 00, true },
+		// { "Example", "oil-refinery", 00, true },
+		// { "Example", "chemical-plant", 00, true },
+		// { "Example", "storage-tank", 00, true },
+		// { "Example", "storage-chest", 00, true },
+		// { "Example", "passive-provider-chest", 00, true },
+		// { "Example", "roboport", 00, true },
 
 		{ "Burner City", "stone-furnace", 22, true },
 		{ "Burner City", "burner-mining-drill", 35, true },
@@ -370,7 +383,7 @@ split {
 		}
 	}
 	
-	// will split when searches are completed (for the ones selected in the Auto-splitter settings)
+	// will split when researches are completed (for the ones selected in the Auto-splitter settings)
 	foreach(var id in vars.searchSplit.Keys){
 		if (settings["Research"]) {
 			if (!settings[id]) continue;

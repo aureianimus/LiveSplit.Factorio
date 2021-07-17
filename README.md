@@ -161,3 +161,10 @@ Added Pointers for: Researches and building numbers
 - Look into splitting on production stats (e.g. number of purple science produced)
 - Add the rest of the buildings to the building list
 - Add more splits (on building count) in the option menu
+- Update CT file to dynamically determine pointers based on Factorio GlobalContext, and be correct for versions other than 1.34-gog
+
+Contributors:
+
+- AureiAnimus
+- MrHug
+- Tignass
