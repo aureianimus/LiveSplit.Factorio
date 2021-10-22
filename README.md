@@ -154,6 +154,21 @@ _Note that this only works properly if you also use the script to start your tim
 Based on Bloodybone cheat file.
 Added Pointers for: Researches and building numbers
 
+## Development notes
+
+How to update the base pointer of the game:
+
+1. Start Factorio
+2. Start CheatEnngine
+3. Add "Factorio.Global" as an address (Add Address Manually -> enter Factorio.Global in the address field)
+4. Add "Factorio.exe" as an address (Add Address Manually -> enter Factorio.exe in the address field)
+5. Subtract from Factorio.Global the address of the executable to find the offset (as hex numbers)
+6. Add a state section in the .ASL file, replacing the first offset for each line with the one you found
+7. Start the auto splitter with debugger attached. [See here](https://github.com/LiveSplit/LiveSplit.AutoSplitters/blob/master/README.md#debugging)
+8. Read log, it should say "No known version with Memory size xxx"
+9. Add section to init to auto detect your version using the memory size from the log
+10. Submit a PR to add your version to the repo
+
 ## TODO
 
 - check buildingNumberArea (in state section) for other versions than 1.34-gog
