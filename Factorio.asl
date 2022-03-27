@@ -265,6 +265,8 @@ startup {
 		// { "Example", "passive-provider-chest", 00, true },
 		// { "Example", "roboport", 00, true },
 
+		{ "First lab", "lab", 1, true },
+
 		{ "Burner City", "stone-furnace", 22, true },
 		{ "Burner City", "burner-mining-drill", 35, true },
 		{ "Burner City", "iron-chest", 1, true },
